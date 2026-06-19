@@ -6,9 +6,12 @@ const dbApi = require('../db');
 const { renderContent, formatDate, truncate } = require('../lib/format');
 const { resolveMedia } = require('../lib/media');
 
+// Wrap async handlers so rejections reach Express' error handler.
+const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
 // Public blog list
-router.get('/', (req, res) => {
-  const posts = dbApi.listBlogs({ includeDrafts: false, limit: 100 });
+router.get('/', ah(async (req, res) => {
+  const posts = await dbApi.listBlogs({ includeDrafts: false, limit: 100 });
   res.render('blog', {
     site,
     title: 'Blog — Backlinkedge SEO',
@@ -17,11 +20,11 @@ router.get('/', (req, res) => {
     truncate,
     resolveMedia
   });
-});
+}));
 
 // Single post
-router.get('/:slug', (req, res) => {
-  const post = dbApi.getBlogBySlug(req.params.slug);
+router.get('/:slug', ah(async (req, res) => {
+  const post = await dbApi.getBlogBySlug(req.params.slug);
   if (!post || post.status !== 'published') {
     return res.status(404).render('message', {
       title: 'Post not found',
@@ -31,7 +34,7 @@ router.get('/:slug', (req, res) => {
     });
   }
   // A few recent posts for the "more reading" rail
-  const more = dbApi.listBlogs({ includeDrafts: false, limit: 4 })
+  const more = (await dbApi.listBlogs({ includeDrafts: false, limit: 4 }))
     .filter((p) => p.id !== post.id)
     .slice(0, 3);
 
@@ -44,6 +47,6 @@ router.get('/:slug', (req, res) => {
     formatDate,
     resolveMedia
   });
-});
+}));
 
 module.exports = router;

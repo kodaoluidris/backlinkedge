@@ -83,7 +83,31 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n  Backlinkedge SEO running at http://localhost:${PORT}`);
-  console.log(`  Admin panel:  http://localhost:${PORT}/admin\n`);
+// Error handler (catches rejected async route handlers)
+app.use((err, req, res, next) => {
+  console.error('Request error:', err && err.message ? err.message : err);
+  if (res.headersSent) return next(err);
+  res.status(500).render('message', {
+    title: 'Something went wrong',
+    heading: 'Something went wrong',
+    body: 'An unexpected error occurred. Please try again.',
+    cta: { href: '/', label: 'Back to home' }
+  });
 });
+
+// Initialize the database (creates DB + tables if needed), then start the server.
+const db = require('./db');
+db.init()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n  Backlinkedge SEO running at http://localhost:${PORT}`);
+      console.log(`  Admin panel:  http://localhost:${PORT}/admin\n`);
+    });
+  })
+  .catch((err) => {
+    console.error('\n  ✗ Could not connect to MySQL.');
+    console.error(`    ${err.message}`);
+    console.error('    Check your DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME in .env,');
+    console.error('    and make sure your MySQL server is running.\n');
+    process.exit(1);
+  });

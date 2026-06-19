@@ -15,14 +15,15 @@ npm run dev               # auto-reload (node --watch)
 - **Landing page:** http://localhost:3000
 - **Admin panel:** http://localhost:3000/admin
 
-> Runs on Node 18.5+? No — it uses the built-in `node:sqlite`, so **Node 22.5+** is required
-> (you're on 25). No native build step, no database server.
+> Requires **Node 18+** and a **MySQL** server. The app auto-creates the database
+> and all tables on first boot — just provide credentials in `.env`.
 
 ## Configuration (`.env`)
 
 | Variable | What it's for |
 |---|---|
 | `PORT` / `BASE_URL` | App port and public URL (used to build Stripe redirect URLs) |
+| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` | MySQL connection — app auto-creates the DB + tables |
 | `STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_…`) |
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (`pk_test_…`) |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`) |
@@ -67,7 +68,7 @@ seo/
 ├── config/
 │   ├── plans.js              # pricing plans — single source of truth
 │   └── stripe.js             # Stripe client (graceful when unconfigured)
-├── db/index.js               # node:sqlite schema + queries  → data/app.db
+├── db/index.js               # MySQL pool, schema/init + queries (async)
 ├── middleware/auth.js        # admin auth (timing-safe), route guard
 ├── routes/
 │   ├── checkout.js           # POST /checkout/:plan → Stripe Checkout; success/cancel

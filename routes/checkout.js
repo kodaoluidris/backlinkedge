@@ -67,7 +67,7 @@ router.post('/:planId', async (req, res) => {
 // the completed Checkout session. This makes payments show up in the admin panel
 // immediately, even before webhooks are wired up. It's idempotent — the webhook
 // (when configured) writes the same rows keyed by invoice id, so no duplicates.
-function recordFromSession(session) {
+async function recordFromSession(session) {
   try {
     const meta = session.metadata || {};
     const details = session.customer_details || {};
@@ -75,7 +75,7 @@ function recordFromSession(session) {
     const custId = typeof cust === 'string' ? cust : (cust && cust.id);
 
     if (custId) {
-      dbApi.upsertCustomer({
+      await dbApi.upsertCustomer({
         stripeCustomerId: custId,
         email: details.email,
         name: details.name
@@ -84,7 +84,7 @@ function recordFromSession(session) {
 
     const sub = session.subscription;
     if (sub && typeof sub === 'object') {
-      dbApi.upsertSubscription({
+      await dbApi.upsertSubscription({
         stripeSubscriptionId: sub.id,
         stripeCustomerId: custId,
         email: details.email,
@@ -101,7 +101,7 @@ function recordFromSession(session) {
 
     const inv = session.invoice;
     const invId = typeof inv === 'string' ? inv : (inv && inv.id);
-    dbApi.recordTransaction({
+    await dbApi.recordTransaction({
       stripeInvoiceId: invId || session.id, // session id as a stable fallback key
       stripeCustomerId: custId,
       email: details.email,
@@ -127,7 +127,7 @@ router.get('/success', async (req, res) => {
       });
       plan = session.metadata && session.metadata.plan_name;
       if (session.payment_status === 'paid' || session.status === 'complete') {
-        recordFromSession(session);
+        await recordFromSession(session);
       }
     } catch (err) {
       console.error('Could not retrieve checkout session:', err.message);

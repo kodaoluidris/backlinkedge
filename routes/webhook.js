@@ -23,17 +23,15 @@ router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  try {
-    handleEvent(event);
-  } catch (err) {
-    console.error('Webhook handler error:', err.message);
-    // Still 200 so Stripe doesn't hammer retries for a logic bug; logged above.
-  }
-
-  res.json({ received: true });
+  handleEvent(event)
+    .catch((err) => {
+      console.error('Webhook handler error:', err.message);
+      // Still 200 so Stripe doesn't hammer retries for a logic bug; logged above.
+    })
+    .finally(() => res.json({ received: true }));
 });
 
-function handleEvent(event) {
+async function handleEvent(event) {
   const obj = event.data && event.data.object ? event.data.object : {};
 
   switch (event.type) {
@@ -41,14 +39,14 @@ function handleEvent(event) {
     case 'checkout.session.completed': {
       const meta = obj.metadata || {};
       if (obj.customer) {
-        dbApi.upsertCustomer({
+        await dbApi.upsertCustomer({
           stripeCustomerId: obj.customer,
           email: obj.customer_details ? obj.customer_details.email : obj.customer_email,
           name: obj.customer_details ? obj.customer_details.name : null
         });
       }
       if (obj.subscription) {
-        dbApi.upsertSubscription({
+        await dbApi.upsertSubscription({
           stripeSubscriptionId: obj.subscription,
           stripeCustomerId: obj.customer,
           email: obj.customer_details ? obj.customer_details.email : obj.customer_email,
@@ -67,7 +65,7 @@ function handleEvent(event) {
     case 'invoice.payment_succeeded': {
       const line = (obj.lines && obj.lines.data && obj.lines.data[0]) || {};
       const meta = (line.metadata && Object.keys(line.metadata).length ? line.metadata : obj.subscription_details && obj.subscription_details.metadata) || {};
-      dbApi.recordTransaction({
+      await dbApi.recordTransaction({
         stripeEventId: event.id,
         stripeInvoiceId: obj.id,
         stripeCustomerId: obj.customer,
@@ -83,7 +81,7 @@ function handleEvent(event) {
     }
 
     case 'invoice.payment_failed': {
-      dbApi.recordTransaction({
+      await dbApi.recordTransaction({
         stripeEventId: event.id,
         stripeInvoiceId: obj.id,
         stripeCustomerId: obj.customer,
@@ -100,7 +98,7 @@ function handleEvent(event) {
     case 'customer.subscription.deleted': {
       const meta = obj.metadata || {};
       const price = (obj.items && obj.items.data && obj.items.data[0] && obj.items.data[0].price) || {};
-      dbApi.upsertSubscription({
+      await dbApi.upsertSubscription({
         stripeSubscriptionId: obj.id,
         stripeCustomerId: obj.customer,
         planId: meta.plan_id,

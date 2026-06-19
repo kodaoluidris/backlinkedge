@@ -1,191 +1,234 @@
-// Database layer — uses Node's built-in SQLite (node:sqlite).
-// Zero external/native dependencies; data lives in ./data/app.db
+// Database layer — MySQL (via mysql2/promise connection pool).
+// Credentials come from environment variables (see .env / .env.example).
+// All functions are async. Call `await init()` once at startup (server.js does this).
 
-const path = require('path');
-const fs = require('fs');
+const mysql = require('mysql2/promise');
 
-let DatabaseSync;
-try {
-  ({ DatabaseSync } = require('node:sqlite'));
-} catch (err) {
-  console.error('\n  ✗ This app requires Node.js 22.5+ for the built-in "node:sqlite" module.');
-  console.error(`    You are running ${process.version}.`);
-  console.error('    Fix: switch Node versions, e.g.  nvm use 22   (or 24/25), then retry.\n');
-  process.exit(1);
+const DB = {
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'backlinkedge_seo'
+};
+
+// `dateStrings: true` makes DATETIME/DATE come back as 'YYYY-MM-DD HH:MM:SS'
+// strings (matching the previous SQLite format) so the view formatters keep working.
+let pool = mysql.createPool({
+  host: DB.host,
+  port: DB.port,
+  user: DB.user,
+  password: DB.password,
+  database: DB.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  dateStrings: true,
+  charset: 'utf8mb4'
+});
+
+// Convenience helpers around the pool.
+async function query(sql, params = []) {
+  const [rows] = await pool.query(sql, params);
+  return rows;
+}
+async function get(sql, params = []) {
+  const rows = await query(sql, params);
+  return rows[0] || null;
+}
+async function run(sql, params = []) {
+  const [result] = await pool.query(sql, params);
+  return result; // { insertId, affectedRows, ... }
 }
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+/* ───────────────────────── Schema / init ───────────────────────── */
 
-const db = new DatabaseSync(path.join(DATA_DIR, 'app.db'));
-
-db.exec(`
-  PRAGMA journal_mode = WAL;
-
-  CREATE TABLE IF NOT EXISTS customers (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    stripe_customer_id  TEXT UNIQUE,
-    email               TEXT,
-    name                TEXT,
-    created_at          TEXT DEFAULT (datetime('now'))
+// Creates the database (if missing) and all tables. Safe to run repeatedly.
+async function init() {
+  // First connect without a database to ensure it exists.
+  const bootstrap = await mysql.createConnection({
+    host: DB.host, port: DB.port, user: DB.user, password: DB.password, multipleStatements: false
+  });
+  await bootstrap.query(
+    `CREATE DATABASE IF NOT EXISTS \`${DB.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
   );
+  await bootstrap.end();
 
-  CREATE TABLE IF NOT EXISTS subscriptions (
-    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
-    stripe_subscription_id  TEXT UNIQUE,
-    stripe_customer_id      TEXT,
-    email                   TEXT,
-    plan_id                 TEXT,
-    plan_name               TEXT,
-    amount                  INTEGER,        -- cents
-    currency                TEXT,
-    status                  TEXT,           -- active, canceled, past_due, ...
-    current_period_end      TEXT,
-    created_at              TEXT DEFAULT (datetime('now')),
-    updated_at              TEXT DEFAULT (datetime('now'))
-  );
+  await query(`
+    CREATE TABLE IF NOT EXISTS customers (
+      id                  INT AUTO_INCREMENT PRIMARY KEY,
+      stripe_customer_id  VARCHAR(255) UNIQUE,
+      email               VARCHAR(320),
+      name                VARCHAR(255),
+      created_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 
-  CREATE TABLE IF NOT EXISTS transactions (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    stripe_event_id     TEXT,
-    stripe_invoice_id   TEXT UNIQUE,
-    stripe_customer_id  TEXT,
-    email               TEXT,
-    name                TEXT,
-    plan_id             TEXT,
-    plan_name           TEXT,
-    amount              INTEGER,            -- cents
-    currency            TEXT,
-    status              TEXT,               -- paid, refunded, failed
-    created_at          TEXT DEFAULT (datetime('now'))
-  );
+  await query(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id                      INT AUTO_INCREMENT PRIMARY KEY,
+      stripe_subscription_id  VARCHAR(255) UNIQUE,
+      stripe_customer_id      VARCHAR(255),
+      email                   VARCHAR(320),
+      plan_id                 VARCHAR(100),
+      plan_name               VARCHAR(255),
+      amount                  BIGINT,
+      currency                VARCHAR(10),
+      status                  VARCHAR(40),
+      current_period_end      DATETIME NULL,
+      created_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_sub_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 
-  CREATE INDEX IF NOT EXISTS idx_tx_created ON transactions(created_at);
-  CREATE INDEX IF NOT EXISTS idx_sub_status ON subscriptions(status);
+  await query(`
+    CREATE TABLE IF NOT EXISTS transactions (
+      id                  INT AUTO_INCREMENT PRIMARY KEY,
+      stripe_event_id     VARCHAR(255),
+      stripe_invoice_id   VARCHAR(255) UNIQUE,
+      stripe_customer_id  VARCHAR(255),
+      email               VARCHAR(320),
+      name                VARCHAR(255),
+      plan_id             VARCHAR(100),
+      plan_name           VARCHAR(255),
+      amount              BIGINT,
+      currency            VARCHAR(10),
+      status              VARCHAR(40),
+      created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_tx_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 
-  CREATE TABLE IF NOT EXISTS blogs (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug        TEXT UNIQUE,
-    title       TEXT NOT NULL,
-    excerpt     TEXT,
-    content     TEXT,
-    image       TEXT,                       -- /uploads/... path or external URL (image OR video)
-    media_type  TEXT DEFAULT 'image',        -- image | video
-    author      TEXT,
-    status      TEXT DEFAULT 'published',   -- published | draft
-    created_at  TEXT DEFAULT (datetime('now')),
-    updated_at  TEXT DEFAULT (datetime('now'))
-  );
+  await query(`
+    CREATE TABLE IF NOT EXISTS blogs (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      slug        VARCHAR(120) UNIQUE,
+      title       VARCHAR(255) NOT NULL,
+      excerpt     TEXT,
+      content     LONGTEXT,
+      image       TEXT,
+      media_type  VARCHAR(20) DEFAULT 'image',
+      author      VARCHAR(255),
+      status      VARCHAR(20) DEFAULT 'published',
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_blog_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 
-  CREATE INDEX IF NOT EXISTS idx_blog_status ON blogs(status);
-`);
-
-// ── Migrations for databases created before a column existed ──
-function ensureColumn(table, column, definition) {
-  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
-  if (!cols.some((c) => c.name === column)) {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-  }
+  return pool;
 }
-ensureColumn('blogs', 'media_type', "TEXT DEFAULT 'image'");
 
 /* ───────────────────────── Writers ───────────────────────── */
 
-function upsertCustomer({ stripeCustomerId, email, name }) {
-  db.prepare(`
-    INSERT INTO customers (stripe_customer_id, email, name)
-    VALUES (?, ?, ?)
-    ON CONFLICT(stripe_customer_id) DO UPDATE SET
-      email = COALESCE(excluded.email, email),
-      name  = COALESCE(excluded.name, name)
-  `).run(stripeCustomerId, email || null, name || null);
+async function upsertCustomer({ stripeCustomerId, email, name }) {
+  await run(
+    `INSERT INTO customers (stripe_customer_id, email, name)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       email = COALESCE(VALUES(email), email),
+       name  = COALESCE(VALUES(name), name)`,
+    [stripeCustomerId, email || null, name || null]
+  );
 }
 
-function upsertSubscription(s) {
-  db.prepare(`
-    INSERT INTO subscriptions
-      (stripe_subscription_id, stripe_customer_id, email, plan_id, plan_name,
-       amount, currency, status, current_period_end, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-    ON CONFLICT(stripe_subscription_id) DO UPDATE SET
-      status             = excluded.status,
-      current_period_end = excluded.current_period_end,
-      plan_id            = COALESCE(excluded.plan_id, plan_id),
-      plan_name          = COALESCE(excluded.plan_name, plan_name),
-      amount             = COALESCE(excluded.amount, amount),
-      updated_at         = datetime('now')
-  `).run(
-    s.stripeSubscriptionId, s.stripeCustomerId, s.email || null,
-    s.planId || null, s.planName || null, s.amount || null,
-    s.currency || 'usd', s.status, s.currentPeriodEnd || null
+async function upsertSubscription(s) {
+  await run(
+    `INSERT INTO subscriptions
+       (stripe_subscription_id, stripe_customer_id, email, plan_id, plan_name,
+        amount, currency, status, current_period_end, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+     ON DUPLICATE KEY UPDATE
+       status             = VALUES(status),
+       current_period_end = VALUES(current_period_end),
+       plan_id            = COALESCE(VALUES(plan_id), plan_id),
+       plan_name          = COALESCE(VALUES(plan_name), plan_name),
+       amount             = COALESCE(VALUES(amount), amount),
+       updated_at         = NOW()`,
+    [
+      s.stripeSubscriptionId, s.stripeCustomerId, s.email || null,
+      s.planId || null, s.planName || null, s.amount || null,
+      s.currency || 'usd', s.status, normalizeDate(s.currentPeriodEnd)
+    ]
   );
 }
 
 // Returns true if inserted, false if it was a duplicate invoice (idempotent).
-function recordTransaction(t) {
-  const res = db.prepare(`
-    INSERT OR IGNORE INTO transactions
-      (stripe_event_id, stripe_invoice_id, stripe_customer_id, email, name,
-       plan_id, plan_name, amount, currency, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    t.stripeEventId || null, t.stripeInvoiceId || null, t.stripeCustomerId || null,
-    t.email || null, t.name || null, t.planId || null, t.planName || null,
-    t.amount || 0, t.currency || 'usd', t.status || 'paid'
+async function recordTransaction(t) {
+  const res = await run(
+    `INSERT IGNORE INTO transactions
+       (stripe_event_id, stripe_invoice_id, stripe_customer_id, email, name,
+        plan_id, plan_name, amount, currency, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      t.stripeEventId || null, t.stripeInvoiceId || null, t.stripeCustomerId || null,
+      t.email || null, t.name || null, t.planId || null, t.planName || null,
+      t.amount || 0, t.currency || 'usd', t.status || 'paid'
+    ]
   );
-  return res.changes > 0;
+  return res.affectedRows > 0;
+}
+
+// Accepts an ISO string / Date and returns 'YYYY-MM-DD HH:MM:SS' for MySQL DATETIME.
+function normalizeDate(v) {
+  if (!v) return null;
+  const d = v instanceof Date ? v : new Date(v);
+  if (isNaN(d)) return null;
+  return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 /* ───────────────────────── Readers ───────────────────────── */
 
-function listTransactions({ limit = 100, offset = 0 } = {}) {
-  return db.prepare(`
-    SELECT * FROM transactions ORDER BY datetime(created_at) DESC
-    LIMIT ? OFFSET ?
-  `).all(limit, offset);
+async function listTransactions({ limit = 100, offset = 0 } = {}) {
+  return query(
+    `SELECT * FROM transactions ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [Number(limit), Number(offset)]
+  );
 }
 
-function listSubscriptions() {
-  return db.prepare(`
-    SELECT * FROM subscriptions ORDER BY datetime(updated_at) DESC
-  `).all();
+async function listSubscriptions() {
+  return query(`SELECT * FROM subscriptions ORDER BY updated_at DESC`);
 }
 
-function getAnalytics() {
-  const totalRevenue = db.prepare(
+async function getAnalytics() {
+  const totalRevenue = (await get(
     `SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE status='paid'`
-  ).get().v;
-
-  const txCount = db.prepare(
+  )).v;
+  const txCount = (await get(
     `SELECT COUNT(*) AS v FROM transactions WHERE status='paid'`
-  ).get().v;
-
-  const activeSubs = db.prepare(
+  )).v;
+  const activeSubs = (await get(
     `SELECT COUNT(*) AS v FROM subscriptions WHERE status='active'`
-  ).get().v;
-
-  // MRR = sum of active subscription amounts
-  const mrr = db.prepare(
+  )).v;
+  const mrr = (await get(
     `SELECT COALESCE(SUM(amount),0) AS v FROM subscriptions WHERE status='active'`
-  ).get().v;
+  )).v;
+  const customers = (await get(`SELECT COUNT(*) AS v FROM customers`)).v;
 
-  const customers = db.prepare(`SELECT COUNT(*) AS v FROM customers`).get().v;
-
-  const byPlan = db.prepare(`
+  const byPlan = await query(`
     SELECT plan_name AS plan, COUNT(*) AS count, COALESCE(SUM(amount),0) AS revenue
     FROM transactions WHERE status='paid'
     GROUP BY plan_name ORDER BY revenue DESC
-  `).all();
+  `);
 
-  // Revenue per day for the last 30 days (for the chart)
-  const daily = db.prepare(`
-    SELECT date(created_at) AS day, COALESCE(SUM(amount),0) AS revenue, COUNT(*) AS count
+  const daily = await query(`
+    SELECT DATE(created_at) AS day, COALESCE(SUM(amount),0) AS revenue, COUNT(*) AS count
     FROM transactions
-    WHERE status='paid' AND date(created_at) >= date('now','-29 days')
-    GROUP BY date(created_at) ORDER BY day ASC
-  `).all();
+    WHERE status='paid' AND DATE(created_at) >= (CURDATE() - INTERVAL 29 DAY)
+    GROUP BY DATE(created_at) ORDER BY day ASC
+  `);
 
-  return { totalRevenue, txCount, activeSubs, mrr, customers, byPlan, daily };
+  // MySQL returns SUM()/COUNT() as strings sometimes; coerce to numbers.
+  return {
+    totalRevenue: Number(totalRevenue),
+    txCount: Number(txCount),
+    activeSubs: Number(activeSubs),
+    mrr: Number(mrr),
+    customers: Number(customers),
+    byPlan: byPlan.map((p) => ({ plan: p.plan, count: Number(p.count), revenue: Number(p.revenue) })),
+    daily: daily.map((d) => ({ day: d.day, revenue: Number(d.revenue), count: Number(d.count) }))
+  };
 }
 
 /* ───────────────────────── Blogs ───────────────────────── */
@@ -200,77 +243,81 @@ function slugify(title) {
 }
 
 // Ensure slug uniqueness (ignoring a given id when editing).
-function uniqueSlug(base, ignoreId = null) {
+async function uniqueSlug(base, ignoreId = null) {
   let slug = base;
   let n = 1;
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const row = ignoreId
-      ? db.prepare('SELECT id FROM blogs WHERE slug = ? AND id != ?').get(slug, ignoreId)
-      : db.prepare('SELECT id FROM blogs WHERE slug = ?').get(slug);
+      ? await get('SELECT id FROM blogs WHERE slug = ? AND id != ?', [slug, ignoreId])
+      : await get('SELECT id FROM blogs WHERE slug = ?', [slug]);
     if (!row) return slug;
     n += 1;
     slug = `${base}-${n}`;
   }
 }
 
-function createBlog(b) {
-  const slug = uniqueSlug(slugify(b.title));
-  const res = db.prepare(`
-    INSERT INTO blogs (slug, title, excerpt, content, image, media_type, author, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    slug, b.title, b.excerpt || null, b.content || null,
-    b.image || null, b.mediaType || 'image', b.author || 'Backlinkedge Team', b.status || 'published'
+async function createBlog(b) {
+  const slug = await uniqueSlug(slugify(b.title));
+  const res = await run(
+    `INSERT INTO blogs (slug, title, excerpt, content, image, media_type, author, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      slug, b.title, b.excerpt || null, b.content || null,
+      b.image || null, b.mediaType || 'image', b.author || 'Backlinkedge Team', b.status || 'published'
+    ]
   );
-  return { id: res.lastInsertRowid, slug };
+  return { id: res.insertId, slug };
 }
 
-function updateBlog(id, b) {
-  const slug = uniqueSlug(slugify(b.title), id);
-  // Only change media_type when a new media (image/url) is provided.
+async function updateBlog(id, b) {
+  const slug = await uniqueSlug(slugify(b.title), id);
   const newMedia = b.image || null;
-  db.prepare(`
-    UPDATE blogs SET
-      slug = ?, title = ?, excerpt = ?, content = ?,
-      image = COALESCE(?, image),
-      media_type = CASE WHEN ? IS NOT NULL THEN ? ELSE media_type END,
-      author = ?, status = ?,
-      updated_at = datetime('now')
-    WHERE id = ?
-  `).run(
-    slug, b.title, b.excerpt || null, b.content || null,
-    newMedia,
-    newMedia, b.mediaType || 'image',
-    b.author || 'Backlinkedge Team', b.status || 'published', id
+  await run(
+    `UPDATE blogs SET
+       slug = ?, title = ?, excerpt = ?, content = ?,
+       image = COALESCE(?, image),
+       media_type = CASE WHEN ? IS NOT NULL THEN ? ELSE media_type END,
+       author = ?, status = ?,
+       updated_at = NOW()
+     WHERE id = ?`,
+    [
+      slug, b.title, b.excerpt || null, b.content || null,
+      newMedia,
+      newMedia, b.mediaType || 'image',
+      b.author || 'Backlinkedge Team', b.status || 'published', id
+    ]
   );
   return { id, slug };
 }
 
-function deleteBlog(id) {
-  return db.prepare('DELETE FROM blogs WHERE id = ?').run(id).changes > 0;
+async function deleteBlog(id) {
+  const res = await run('DELETE FROM blogs WHERE id = ?', [id]);
+  return res.affectedRows > 0;
 }
 
-function getBlogById(id) {
-  return db.prepare('SELECT * FROM blogs WHERE id = ?').get(id) || null;
+async function getBlogById(id) {
+  return get('SELECT * FROM blogs WHERE id = ?', [id]);
 }
 
-function getBlogBySlug(slug) {
-  return db.prepare('SELECT * FROM blogs WHERE slug = ?').get(slug) || null;
+async function getBlogBySlug(slug) {
+  return get('SELECT * FROM blogs WHERE slug = ?', [slug]);
 }
 
-// Public listing (published only) or admin listing (all).
-function listBlogs({ includeDrafts = false, limit = 100, offset = 0 } = {}) {
+async function listBlogs({ includeDrafts = false, limit = 100, offset = 0 } = {}) {
   const where = includeDrafts ? '' : "WHERE status = 'published'";
-  return db.prepare(`
-    SELECT * FROM blogs ${where}
-    ORDER BY datetime(created_at) DESC
-    LIMIT ? OFFSET ?
-  `).all(limit, offset);
+  return query(
+    `SELECT * FROM blogs ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [Number(limit), Number(offset)]
+  );
 }
 
 module.exports = {
-  db,
+  pool,
+  init,
+  query,
+  get,
+  run,
   upsertCustomer,
   upsertSubscription,
   recordTransaction,

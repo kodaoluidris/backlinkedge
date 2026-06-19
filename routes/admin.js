@@ -8,6 +8,9 @@ const { upload, mediaTypeOf } = require('../middleware/upload');
 const { resolveMedia } = require('../lib/media');
 const { formatDate } = require('../lib/format');
 
+// Wrap async route handlers so rejected promises reach Express' error handler.
+const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
 /* ───────────── Auth ───────────── */
 
 router.get('/login', (req, res) => {
@@ -33,9 +36,9 @@ router.post('/logout', (req, res) => {
 
 router.use(requireAdmin);
 
-router.get('/', (req, res) => {
-  const a = dbApi.getAnalytics();
-  const recent = dbApi.listTransactions({ limit: 8 });
+router.get('/', ah(async (req, res) => {
+  const a = await dbApi.getAnalytics();
+  const recent = await dbApi.listTransactions({ limit: 8 });
   res.render('admin/dashboard', {
     active: 'dashboard',
     adminEmail: req.session.adminEmail,
@@ -43,33 +46,33 @@ router.get('/', (req, res) => {
     a,
     recent
   });
-});
+}));
 
-router.get('/transactions', (req, res) => {
-  const transactions = dbApi.listTransactions({ limit: 500 });
+router.get('/transactions', ah(async (req, res) => {
+  const transactions = await dbApi.listTransactions({ limit: 500 });
   res.render('admin/transactions', {
     active: 'transactions',
     adminEmail: req.session.adminEmail,
     stripeReady: isConfigured,
     transactions
   });
-});
+}));
 
-router.get('/subscriptions', (req, res) => {
-  const subscriptions = dbApi.listSubscriptions();
+router.get('/subscriptions', ah(async (req, res) => {
+  const subscriptions = await dbApi.listSubscriptions();
   res.render('admin/subscriptions', {
     active: 'subscriptions',
     adminEmail: req.session.adminEmail,
     stripeReady: isConfigured,
     subscriptions
   });
-});
+}));
 
 /* ───────────── Blog CRUD ───────────── */
 
 // List
-router.get('/blogs', (req, res) => {
-  const posts = dbApi.listBlogs({ includeDrafts: true, limit: 500 });
+router.get('/blogs', ah(async (req, res) => {
+  const posts = await dbApi.listBlogs({ includeDrafts: true, limit: 500 });
   res.render('admin/blogs', {
     active: 'blogs',
     adminEmail: req.session.adminEmail,
@@ -79,7 +82,7 @@ router.get('/blogs', (req, res) => {
     resolveMedia,
     flash: req.query.msg || null
   });
-});
+}));
 
 // New form
 router.get('/blogs/new', (req, res) => {
@@ -94,8 +97,8 @@ router.get('/blogs/new', (req, res) => {
 });
 
 // Edit form
-router.get('/blogs/:id/edit', (req, res) => {
-  const post = dbApi.getBlogById(Number(req.params.id));
+router.get('/blogs/:id/edit', ah(async (req, res) => {
+  const post = await dbApi.getBlogById(Number(req.params.id));
   if (!post) return res.redirect('/admin/blogs');
   res.render('admin/blog-form', {
     active: 'blogs',
@@ -105,7 +108,7 @@ router.get('/blogs/:id/edit', (req, res) => {
     error: null,
     resolveMedia
   });
-});
+}));
 
 // Helper to handle the multer upload + form fields for create/update
 function handleBlogUpload(req, res, next) {
@@ -118,7 +121,7 @@ function handleBlogUpload(req, res, next) {
 }
 
 // Create
-router.post('/blogs', handleBlogUpload, (req, res) => {
+router.post('/blogs', handleBlogUpload, ah(async (req, res) => {
   const { title, excerpt, content, author, status, image_url } = req.body;
   if (!title || !title.trim()) {
     return res.status(400).render('admin/blog-form', {
@@ -130,14 +133,14 @@ router.post('/blogs', handleBlogUpload, (req, res) => {
   const mediaType = req.file
     ? mediaTypeOf({ mimetype: req.file.mimetype })
     : mediaTypeOf({ pathOrUrl: image });
-  dbApi.createBlog({ title: title.trim(), excerpt, content, image, mediaType, author, status });
+  await dbApi.createBlog({ title: title.trim(), excerpt, content, image, mediaType, author, status });
   res.redirect('/admin/blogs?msg=created');
-});
+}));
 
 // Update
-router.post('/blogs/:id', handleBlogUpload, (req, res) => {
+router.post('/blogs/:id', handleBlogUpload, ah(async (req, res) => {
   const id = Number(req.params.id);
-  const existing = dbApi.getBlogById(id);
+  const existing = await dbApi.getBlogById(id);
   if (!existing) return res.redirect('/admin/blogs');
 
   const { title, excerpt, content, author, status, image_url } = req.body;
@@ -152,14 +155,14 @@ router.post('/blogs/:id', handleBlogUpload, (req, res) => {
   const mediaType = req.file
     ? mediaTypeOf({ mimetype: req.file.mimetype })
     : mediaTypeOf({ pathOrUrl: image });
-  dbApi.updateBlog(id, { title: title.trim(), excerpt, content, image, mediaType, author, status });
+  await dbApi.updateBlog(id, { title: title.trim(), excerpt, content, image, mediaType, author, status });
   res.redirect('/admin/blogs?msg=updated');
-});
+}));
 
 // Delete
-router.post('/blogs/:id/delete', (req, res) => {
-  dbApi.deleteBlog(Number(req.params.id));
+router.post('/blogs/:id/delete', ah(async (req, res) => {
+  await dbApi.deleteBlog(Number(req.params.id));
   res.redirect('/admin/blogs?msg=deleted');
-});
+}));
 
 module.exports = router;

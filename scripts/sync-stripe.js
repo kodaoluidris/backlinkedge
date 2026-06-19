@@ -15,12 +15,13 @@ async function main() {
     process.exit(1);
   }
 
+  await dbApi.init();
   console.log('Syncing from Stripe (test mode if using sk_test_ keys)…\n');
 
   /* ---- Customers ---- */
   let customers = 0;
   for await (const c of stripe.customers.list({ limit: 100 })) {
-    dbApi.upsertCustomer({ stripeCustomerId: c.id, email: c.email, name: c.name });
+    await dbApi.upsertCustomer({ stripeCustomerId: c.id, email: c.email, name: c.name });
     customers++;
   }
   console.log(`✓ Customers:     ${customers}`);
@@ -30,7 +31,7 @@ async function main() {
   for await (const s of stripe.subscriptions.list({ status: 'all', limit: 100 })) {
     const item = s.items && s.items.data && s.items.data[0];
     const price = item && item.price;
-    dbApi.upsertSubscription({
+    await dbApi.upsertSubscription({
       stripeSubscriptionId: s.id,
       stripeCustomerId: typeof s.customer === 'string' ? s.customer : (s.customer && s.customer.id),
       planId: s.metadata && s.metadata.plan_id,
@@ -53,7 +54,7 @@ async function main() {
     const meta = (line && line.metadata && Object.keys(line.metadata).length ? line.metadata : null)
       || (inv.subscription_details && inv.subscription_details.metadata)
       || {};
-    dbApi.recordTransaction({
+    await dbApi.recordTransaction({
       stripeInvoiceId: inv.id,
       stripeCustomerId: typeof inv.customer === 'string' ? inv.customer : (inv.customer && inv.customer.id),
       email: inv.customer_email,
@@ -68,7 +69,7 @@ async function main() {
   }
   console.log(`✓ Paid invoices: ${paid}`);
 
-  const a = dbApi.getAnalytics();
+  const a = await dbApi.getAnalytics();
   console.log(`\nDone. Local totals → revenue $${(a.totalRevenue / 100).toFixed(2)}, ` +
     `${a.txCount} payments, ${a.activeSubs} active subs.`);
   process.exit(0);
