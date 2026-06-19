@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> — Backlinkedge SEO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="message-screen">
+    <div class="message-card">
+      <a href="/" class="brand" style="justify-content:center;margin-bottom:24px">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M4 14l4-4 4 3 6-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15 6h4v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="brand-text">Backlinkedge<small>SEO</small></span>
+      </a>
+      <h1><%= heading %></h1>
+      <p><%= body %></p>
+      <% if (typeof cta !== 'undefined' && cta) { %>
+        <a href="<%= cta.href %>" class="btn btn-primary"><%= cta.label %></a>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

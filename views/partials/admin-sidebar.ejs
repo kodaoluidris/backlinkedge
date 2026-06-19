@@ -1,0 +1,33 @@
+<aside class="admin-sidebar">
+  <a href="/admin" class="brand admin-brand">
+    <img src="/img/logo/backlinkedge-logo.png" alt="Backlinkedge SEO" class="brand-logo" />
+  </a>
+
+  <nav class="admin-nav">
+    <a href="/admin" class="<%= active === 'dashboard' ? 'is-active' : '' %>">
+      <span class="ico">📊</span> Dashboard
+    </a>
+    <a href="/admin/transactions" class="<%= active === 'transactions' ? 'is-active' : '' %>">
+      <span class="ico">💳</span> Transactions
+    </a>
+    <a href="/admin/subscriptions" class="<%= active === 'subscriptions' ? 'is-active' : '' %>">
+      <span class="ico">🔁</span> Subscriptions
+    </a>
+    <a href="/admin/blogs" class="<%= active === 'blogs' ? 'is-active' : '' %>">
+      <span class="ico">📝</span> Blog Posts
+    </a>
+    <a href="/" target="_blank" rel="noopener">
+      <span class="ico">🌐</span> View Site
+    </a>
+  </nav>
+
+  <div class="admin-user">
+    <div class="admin-user-meta">
+      <span class="admin-avatar"><%= (adminEmail || 'A').charAt(0).toUpperCase() %></span>
+      <span class="admin-email"><%= adminEmail %></span>
+    </div>
+    <form method="POST" action="/admin/logout">
+      <button type="submit" class="btn btn-outline btn-sm btn-block">Log out</button>
+    </form>
+  </div>
+</aside>

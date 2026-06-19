@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="home">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">★ Award Winning SEO Agency</span>
+          <h1>
+            Build Authority.<br />
+            <span class="accent">Rank Higher.</span><br />
+            Generate More Leads.
+          </h1>
+          <p class="lead">
+            White-hat backlink building, technical SEO, and AI search optimization
+            that help businesses dominate Google and AI-powered search results.
+          </p>
+          <div class="hero-cta">
+            <a href="#contact" class="btn btn-primary">Get Free SEO Audit <%- include('partials/icon', { name: 'arrow' }) %></a>
+            <a href="#contact" class="btn btn-ghost"><%- include('partials/icon', { name: 'phone' }) %> Book Strategy Call</a>
+          </div>
+          <div class="social-proof">
+            <div class="avatars" aria-hidden="true">
+              <span style="--i:0"><img src="/img/people/person-1.png" alt="" loading="lazy" /></span>
+              <span style="--i:1"><img src="/img/people/person-2.png" alt="" loading="lazy" /></span>
+              <span style="--i:2"><img src="/img/people/person-3.png" alt="" loading="lazy" /></span>
+              <span style="--i:3"><img src="/img/people/person-4.png" alt="" loading="lazy" /></span>
+            </div>
+            <p><strong>500+ Businesses</strong> Growing With Backlinkedge SEO</p>
+          </div>
+        </div>
+
+        <!-- Dashboard mockup -->
+        <div class="hero-dashboard" aria-hidden="true">
+          <div class="dash-head">
+            <h3>SEO Performance Overview</h3>
+            <span class="dash-range">Last 6 Months ▾</span>
+          </div>
+          <div class="dash-stats">
+            <div class="dash-stat">
+              <span class="dash-label">Organic Traffic</span>
+              <span class="dash-value">12.5K</span>
+              <span class="pill pill-up">▲ 25.4%</span>
+            </div>
+            <div class="dash-stat">
+              <span class="dash-label">Backlinks Built</span>
+              <span class="dash-value">350</span>
+              <span class="pill pill-up">▲ 18.2%</span>
+            </div>
+            <div class="dash-stat">
+              <span class="dash-label">Keywords</span>
+              <span class="dash-value">1.2K</span>
+              <span class="pill pill-up">▲ 10.8%</span>
+            </div>
+            <div class="dash-stat">
+              <span class="dash-label">Domain Authority</span>
+              <span class="dash-value">65</span>
+              <span class="pill pill-up">▲ 9.4%</span>
+            </div>
+          </div>
+          <div class="dash-charts">
+            <div class="dash-line">
+              <div class="dash-line-head">
+                <span>Organic Traffic Growth</span>
+                <strong>12,500 <em class="pill-up">▲ 25.4%</em></strong>
+              </div>
+              <svg viewBox="0 0 320 120" preserveAspectRatio="none" class="line-chart">
+                <defs>
+                  <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#3aa0ff" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#3aa0ff" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,95 L45,88 L90,92 L135,70 L180,74 L225,48 L270,40 L320,18"
+                      fill="none" stroke="#4aa8ff" stroke-width="2.5"/>
+                <path d="M0,95 L45,88 L90,92 L135,70 L180,74 L225,48 L270,40 L320,18 L320,120 L0,120 Z"
+                      fill="url(#lg)"/>
+                <circle cx="180" cy="74" r="4" fill="#fff" stroke="#4aa8ff" stroke-width="2"/>
+              </svg>
+              <div class="chart-months"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+            </div>
+            <div class="dash-donut">
+              <span class="dash-label">Traffic Source</span>
+              <div class="donut"></div>
+              <ul class="donut-legend">
+                <li><i style="background:#4aa8ff"></i>Organic 57%</li>
+                <li><i style="background:#7c5cff"></i>Direct 23%</li>
+                <li><i style="background:#00c2a8"></i>Referral 12%</li>
+                <li><i style="background:#ffb13c"></i>Social 8%</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATS BAR ============ -->
+    <section class="stats-bar">
+      <div class="container stats-grid">
+        <% [
+          ['backlinks','500+','Backlinks Built','#4aa8ff'],
+          ['projects','100+','Projects Completed','#00c2a8'],
+          ['retention','95%','Client Retention','#7c5cff'],
+          ['growth','3.8x','Average Traffic Growth','#4aa8ff'],
+          ['experience','5+','Years of Experience','#ffb13c']
+        ].forEach(function(s){ %>
+          <div class="stat">
+            <span class="stat-icon" style="--c:<%= s[3] %>"><%- include('partials/icon', { name: s[0] }) %></span>
+            <span class="stat-body">
+              <span class="stat-num"><%= s[1] %></span>
+              <span class="stat-text"><%= s[2] %></span>
+            </span>
+          </div>
+        <% }); %>
+      </div>
+      <div class="container trusted">
+        <span>Trusted by amazing companies</span>
+        <ul class="logo-row">
+          <% ['Brand.io','cloudtalk','taskly','metrix','rise','penta','Zoomer'].forEach(function(l){ %>
+            <li><%= l %></li>
+          <% }); %>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section class="section" id="about">
+      <div class="container">
+        <p class="section-tag">About Us</p>
+        <div class="about-grid">
+          <div class="about-copy">
+            <h2 class="about-title">We help businesses dominate Google &amp; AI search</h2>
+            <p>
+              Backlinkedge SEO is an award-winning agency specializing in white-hat backlink
+              building, technical SEO, and AI search optimization. For over 5 years we've helped
+              500+ businesses climb the rankings, grow organic traffic, and turn searches into
+              real, paying customers.
+            </p>
+            <p>
+              Our approach is data-driven and fully transparent. From in-depth website audits and
+              keyword research to authority link building, content strategy, and local SEO, every
+              campaign is built to deliver measurable growth — backed by detailed monthly reporting
+              so you always know exactly what we're doing and why.
+            </p>
+  
+            <ul class="about-points">
+              <li><span class="check">✓</span> White-hat, Google-safe strategies — no shortcuts, no penalties</li>
+              <li><span class="check">✓</span> Optimization for AI engines: ChatGPT, Gemini, Claude &amp; AI Overviews</li>
+              <li><span class="check">✓</span> Transparent reporting and dedicated strategy calls</li>
+              <li><span class="check">✓</span> An average <strong>3.8x</strong> traffic growth across clients</li>
+            </ul>
+  
+            <div class="about-cta">
+              <a href="#pricing" class="btn btn-primary">View Plans <%- include('partials/icon', { name: 'arrow' }) %></a>
+              <a href="#contact" class="btn btn-ghost">Talk to an Expert</a>
+            </div>
+          </div>
+  
+          <div class="about-highlights">
+            <% [
+              ['retention','95%','Client Retention','Clients stay because the results keep coming.','#00c2a8'],
+              ['backlinks','500+','Backlinks Built','High-authority links from real, relevant sites.','#4aa8ff'],
+              ['experience','5+','Years of Experience','A track record across dozens of industries.','#ffb13c'],
+              ['growth','3.8x','Avg. Traffic Growth','Measurable organic growth, not vanity metrics.','#7c5cff']
+            ].forEach(function(h){ %>
+              <div class="about-card">
+                <span class="about-icon" style="--c:<%= h[4] %>"><%- include('partials/icon', { name: h[0] }) %></span>
+                <span class="about-num"><%= h[1] %></span>
+                <span class="about-label"><%= h[2] %></span>
+                <p><%= h[3] %></p>
+              </div>
+            <% }); %>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SERVICES ============ -->
+    <section class="section section-alt" id="services">
+      <div class="container">
+        <p class="section-tag">Our Services</p>
+        <h2 class="section-title">Complete SEO Solutions to Grow Your Business</h2>
+        <p class="section-sub">Data-driven strategies. Ethical SEO practices. Real results.</p>
+
+        <div class="card-grid">
+          <% [
+            ['link','Link Building','High-quality, white-hat backlinks from authoritative websites that boost rankings and domain authority.','#4aa8ff'],
+            ['code','Technical SEO','We fix technical issues, improve site speed, indexing, and create a strong foundation for higher rankings.','#00c2a8'],
+            ['pin','Local SEO','Dominate local search results with Google Business Profile optimization and local citation building.','#ffb13c'],
+            ['ai','GEO / AI SEO','Optimize for AI search engines like ChatGPT, Gemini, Claude & Google AI Overviews to stay ahead.','#7c5cff'],
+            ['content','Content Marketing','SEO-optimized content that attracts, engages, and converts your target audience into customers.','#4aa8ff'],
+            ['consulting','SEO Consulting','Monthly strategy calls, detailed reports, and expert guidance to achieve your business goals.','#00c2a8']
+          ].forEach(function(c){ %>
+            <article class="service-card">
+              <span class="service-icon" style="--c:<%= c[3] %>"><%- include('partials/icon', { name: c[0] }) %></span>
+              <div class="service-body">
+                <h3><%= c[1] %></h3>
+                <p><%= c[2] %></p>
+                <a href="#contact" class="learn-more">Learn More →</a>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="section section-alt" id="results">
+      <div class="container">
+        <p class="section-tag">Proven Results</p>
+        <h2 class="section-title">Real Results for Real Businesses</h2>
+
+        <div class="results-grid">
+          <div class="result-table-card">
+            <h4>E-Commerce Store <small>Niche: Home Decor</small></h4>
+            <table class="result-table">
+              <thead>
+                <tr><th>Metric</th><th>Before</th><th>After 6 Months</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Organic Traffic</td><td>2,100</td><td class="up">12,500</td></tr>
+                <tr><td>Keywords Ranked</td><td>45</td><td class="up">350</td></tr>
+                <tr><td>Leads / Month</td><td>8</td><td class="up">65</td></tr>
+                <tr><td>Domain Authority</td><td>21</td><td class="up">48</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="result-tools">
+            <% [
+              ['Google Search Console','#4aa8ff','12.6K','1.1%'],
+              ['Ahrefs','#f5793b','1.2K','320'],
+              ['SEMrush','#ff6b35','12.5K','350']
+            ].forEach(function(t){ %>
+              <div class="tool-card">
+                <span class="tool-name"><i style="background:<%= t[1] %>"></i><%= t[0] %></span>
+                <svg viewBox="0 0 200 70" preserveAspectRatio="none" class="mini-chart">
+                  <path d="M0,60 L30,52 L60,55 L90,40 L120,44 L150,26 L200,12"
+                        fill="none" stroke="<%= t[1] %>" stroke-width="2"/>
+                  <path d="M0,60 L30,52 L60,55 L90,40 L120,44 L150,26 L200,12 L200,70 L0,70 Z"
+                        fill="<%= t[1] %>" fill-opacity="0.12"/>
+                </svg>
+                <div class="tool-stats"><span><%= t[2] %></span><span><%= t[3] %></span></div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROCESS ============ -->
+    <section class="section" id="process">
+      <div class="container">
+        <p class="section-tag">Our Process</p>
+        <h2 class="section-title">Our Simple &amp; Proven SEO Process</h2>
+
+        <div class="process-grid">
+          <% [
+            ['search','Step 1','Website Audit','We analyze your website, competitors, and market opportunities.','#4aa8ff'],
+            ['target','Step 2','Keyword Research','We find high-value keywords that drive traffic & bring real results.','#00c2a8'],
+            ['strategy','Step 3','Content Strategy','We create content plans that rank, engage, and convert visitors.','#7c5cff'],
+            ['link','Step 4','Authority Backlinks','We build high-quality backlinks that boost your authority.','#ffb13c'],
+            ['rank','Step 5','Ranking Growth','Watch your keywords climb and traffic grow consistently.','#4aa8ff'],
+            ['report','Step 6','Monthly Reporting','Transparent reports & insights to track your progress every month.','#00c2a8']
+          ].forEach(function(p, idx){ %>
+            <div class="process-step">
+              <span class="process-icon" style="--c:<%= p[4] %>"><%- include('partials/icon', { name: p[0] }) %></span>
+              <span class="process-num"><%= p[1] %></span>
+              <h4><%= p[2] %></h4>
+              <p><%= p[3] %></p>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRICING ============ -->
+    <section class="section section-alt" id="pricing">
+      <div class="container">
+        <p class="section-tag">Pricing Plans</p>
+        <h2 class="section-title">Simple Pricing, Powerful Results</h2>
+
+        <div class="pricing-grid">
+          <% plans.forEach(function(plan){ %>
+            <article class="price-card<%= plan.featured ? ' is-featured' : '' %>">
+              <% if (plan.featured) { %><span class="badge">Most Popular</span><% } %>
+              <h3><%= plan.name %></h3>
+              <p class="price-desc"><%= plan.desc %></p>
+              <p class="price"><span>$</span><%= priceLabel(plan.amount) %><em>/month</em></p>
+              <ul class="price-features">
+                <% plan.features.forEach(function(f){ %>
+                  <li><span class="check">✓</span><%= f %></li>
+                <% }); %>
+              </ul>
+              <form action="/checkout/<%= plan.id %>" method="POST" class="price-form">
+                <button type="submit" class="btn <%= plan.featured ? 'btn-primary' : 'btn-outline' %> btn-block">Get Started</button>
+              </form>
+            </article>
+          <% }); %>
+        </div>
+        <p class="pricing-note">Secure checkout powered by <strong>Stripe</strong> · Cancel anytime</p>
+      </div>
+    </section>
+
+    <!-- ============ TESTIMONIALS ============ -->
+    <section class="section" id="testimonials">
+      <div class="container">
+        <p class="section-tag">What Our Clients Say</p>
+        <h2 class="section-title">Loved by Businesses, Proven by Results</h2>
+
+        <div class="testimonial-grid">
+          <% [
+            ['Backlinkedge SEO helped us grow our traffic by 400% in just 6 months. Their backlink strategy is absolutely top-notch!','Michael Thompson','Founder, Decorify','/img/people/person-1.png'],
+            ['Excellent communication, transparent reporting, and real results. Our keyword rankings have never been better!','Sarah Williams','Marketing Head, Taskly','/img/people/person-2.png'],
+            ['Highly professional team! They understand SEO deeply and deliver beyond expectations.','David Miller','CEO, CloudTalk','/img/people/person-4.png']
+          ].forEach(function(t){ %>
+            <article class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p>"<%= t[0] %>"</p>
+              <div class="author">
+                <span class="author-avatar"><img src="<%= t[3] %>" alt="<%= t[1] %>" loading="lazy" /></span>
+                <span class="author-meta"><strong><%= t[1] %></strong><small><%= t[2] %></small></span>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA BANNER ============ -->
+    <section class="cta-band">
+      <div class="container cta-inner">
+        <div class="cta-copy">
+          <span class="cta-rocket" aria-hidden="true">🚀</span>
+          <div>
+            <h2>Ready to Grow Your Rankings and Your Business?</h2>
+            <p>Get a free SEO audit and discover opportunities you're missing out on.</p>
+          </div>
+        </div>
+        <div class="cta-action">
+          <a href="#contact" class="btn btn-light">Get My Free SEO Audit →</a>
+          <small>No credit card required · Takes 60 seconds</small>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <script src="/js/main.js"></script>
+  <%- include('partials/tawk') %>
+</body>
+</html>

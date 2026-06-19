@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/admin-head') %>
+  <title>Subscriptions — Admin</title>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <%- include('../partials/admin-sidebar', { active, adminEmail }) %>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div>
+          <h1>Subscriptions</h1>
+          <p><%= subscriptions.length %> subscription<%= subscriptions.length === 1 ? '' : 's' %> total.</p>
+        </div>
+      </header>
+
+      <%
+        const fmtMoney = (cents, cur) => '$' + ((cents || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtDate = (s) => {
+          if (!s) return '—';
+          const d = new Date(s.includes('T') ? s : s.replace(' ', 'T') + 'Z');
+          return isNaN(d) ? s : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        };
+      %>
+
+      <section class="panel">
+        <% if (subscriptions.length === 0) { %>
+          <p class="empty">No subscriptions yet. New subscriptions appear here once customers check out.</p>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Plan</th>
+                  <th>Amount / mo</th>
+                  <th>Status</th>
+                  <th>Renews</th>
+                  <th>Subscription ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% subscriptions.forEach(function(s){ %>
+                  <tr>
+                    <td>
+                      <div class="cell-customer">
+                        <span class="cell-avatar"><%= ((s.email || '?').charAt(0)).toUpperCase() %></span>
+                        <span><strong><%= s.email || '—' %></strong></span>
+                      </div>
+                    </td>
+                    <td><%= s.plan_name || '—' %></td>
+                    <td class="num"><%= fmtMoney(s.amount, s.currency) %></td>
+                    <td><span class="status status-<%= s.status %>"><%= s.status %></span></td>
+                    <td class="muted"><%= fmtDate(s.current_period_end) %></td>
+                    <td class="muted mono"><%= s.stripe_subscription_id ? (s.stripe_subscription_id.slice(0,16) + '…') : '—' %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

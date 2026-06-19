@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <main>
+    <section class="page-hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container">
+        <p class="section-tag">Our Blog</p>
+        <h1 class="page-title">SEO Insights &amp; Growth Strategies</h1>
+        <p class="page-sub">Actionable tips on backlinks, technical SEO, AI search, and ranking higher.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:24px">
+      <div class="container">
+        <% if (!posts || posts.length === 0) { %>
+          <div class="blog-empty">
+            <h3>No articles yet</h3>
+            <p>We're working on great content — check back soon.</p>
+          </div>
+        <% } else { %>
+          <div class="blog-grid">
+            <% posts.forEach(function(p){ %>
+              <article class="blog-card">
+                <a href="/blog/<%= p.slug %>" class="blog-thumb">
+                  <%- include('partials/blog-thumb', { p }) %>
+                </a>
+                <div class="blog-card-body">
+                  <span class="blog-date"><%= formatDate(p.created_at) %></span>
+                  <h3><a href="/blog/<%= p.slug %>"><%= p.title %></a></h3>
+                  <p><%= p.excerpt || truncate(p.content, 140) %></p>
+                  <a href="/blog/<%= p.slug %>" class="learn-more">Read Article →</a>
+                </div>
+              </article>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+  <script src="/js/main.js"></script>
+  <%- include('partials/tawk') %>
+</body>
+</html>

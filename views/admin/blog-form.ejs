@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/admin-head') %>
+  <title><%= post && post.id ? 'Edit' : 'New' %> Post — Admin</title>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <%- include('../partials/admin-sidebar', { active, adminEmail }) %>
+
+    <main class="admin-main">
+      <%
+        const isEdit = post && post.id;
+        const action = isEdit ? ('/admin/blogs/' + post.id) : '/admin/blogs';
+        const v = post || {};
+      %>
+      <header class="admin-topbar">
+        <div>
+          <h1><%= isEdit ? 'Edit Post' : 'New Post' %></h1>
+          <p><%= isEdit ? 'Update this article.' : 'Write and publish a new article.' %></p>
+        </div>
+        <a href="/admin/blogs" class="btn btn-outline btn-sm">← Back to posts</a>
+      </header>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="<%= action %>" enctype="multipart/form-data" class="panel blog-form">
+        <div class="form-row">
+          <label class="form-field">
+            <span>Title <em>*</em></span>
+            <input type="text" name="title" value="<%= v.title || '' %>" placeholder="e.g. 10 White-Hat Backlink Strategies That Work" required />
+          </label>
+        </div>
+
+        <div class="form-row two">
+          <label class="form-field">
+            <span>Author</span>
+            <input type="text" name="author" value="<%= v.author || 'Backlinkedge Team' %>" placeholder="Author name" />
+          </label>
+          <label class="form-field">
+            <span>Status</span>
+            <select name="status">
+              <option value="published" <%= v.status !== 'draft' ? 'selected' : '' %>>Published</option>
+              <option value="draft" <%= v.status === 'draft' ? 'selected' : '' %>>Draft</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label class="form-field">
+            <span>Excerpt <small>(short summary shown on cards)</small></span>
+            <textarea name="excerpt" rows="2" placeholder="One or two sentences summarizing the post…"><%= v.excerpt || '' %></textarea>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <span class="form-label">Featured media <small>(image or video)</small></span>
+          <% const pm = v.image ? resolveMedia(v.image, v.media_type) : null; %>
+          <% if (pm) { %>
+            <div class="image-preview">
+              <% if (pm.kind === 'embed') { %>
+                <div class="post-embed"><iframe src="<%= pm.src %>" frameborder="0" allowfullscreen></iframe></div>
+              <% } else if (pm.kind === 'video') { %>
+                <video src="<%= pm.src %>" controls preload="metadata"></video>
+              <% } else { %>
+                <img src="<%= pm.src %>" alt="Current media" />
+              <% } %>
+              <small>Current <%= pm.kind === 'image' ? 'image' : 'video' %> — upload a new file or paste a new URL to replace it.</small>
+            </div>
+          <% } %>
+          <label class="file-drop">
+            <input type="file" name="image" accept="image/*,video/*" />
+            <span>📷 Click to upload an image or 🎬 video (max 100MB · MP4, WebM, MOV)</span>
+          </label>
+          <label class="form-field" style="margin-top:10px">
+            <span>…or paste an image / video URL <small>(direct file, YouTube, or Vimeo)</small></span>
+            <input type="url" name="image_url" placeholder="https://youtube.com/watch?v=… or https://example.com/video.mp4" />
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label class="form-field">
+            <span>Content <em>*</em></span>
+            <textarea name="content" rows="16" placeholder="Write your article here. Leave a blank line between paragraphs."><%= v.content || '' %></textarea>
+            <small class="hint">Plain text — blank lines start new paragraphs. (HTML is escaped for safety.)</small>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary"><%= isEdit ? 'Save Changes' : 'Publish Post' %></button>
+          <a href="/admin/blogs" class="btn btn-outline">Cancel</a>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // Show selected filename in the drop label
+    document.querySelector('input[name="image"]').addEventListener('change', function () {
+      const label = this.parentElement.querySelector('span');
+      if (this.files && this.files[0]) {
+        const f = this.files[0];
+        const icon = f.type.startsWith('video/') ? '🎬 ' : '📷 ';
+        label.textContent = icon + f.name;
+      }
+    });
+  </script>
+</body>
+</html>

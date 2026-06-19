@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <main>
+    <article class="post">
+      <div class="container post-narrow">
+        <a href="/blog" class="post-back">← Back to blog</a>
+        <p class="section-tag" style="text-align:left">Article</p>
+        <h1 class="post-title"><%= post.title %></h1>
+        <div class="post-meta">
+          <span class="author-avatar" aria-hidden="true"></span>
+          <span><strong><%= post.author || 'Backlinkedge Team' %></strong></span>
+          <span class="dot">·</span>
+          <span><%= formatDate(post.created_at) %></span>
+        </div>
+      </div>
+
+      <% const hero = resolveMedia(post.image, post.media_type); %>
+      <% if (hero) { %>
+        <div class="container post-narrow">
+          <% if (hero.kind === 'embed') { %>
+            <div class="post-embed">
+              <iframe src="<%= hero.src %>" title="<%= post.title %>" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+          <% } else if (hero.kind === 'video') { %>
+            <video class="post-hero-img" src="<%= hero.src %>" controls preload="metadata" playsinline></video>
+          <% } else { %>
+            <img class="post-hero-img" src="<%= hero.src %>" alt="<%= post.title %>" />
+          <% } %>
+        </div>
+      <% } %>
+
+      <div class="container post-narrow">
+        <div class="post-content">
+          <% if (post.excerpt) { %><p class="post-lead"><%= post.excerpt %></p><% } %>
+          <%- renderContent(post.content) %>
+        </div>
+      </div>
+    </article>
+
+    <% if (more && more.length) { %>
+      <section class="section section-alt">
+        <div class="container">
+          <h2 class="section-title" style="margin-bottom:8px">More to read</h2>
+          <div class="blog-grid" style="margin-top:32px">
+            <% more.forEach(function(p){ %>
+              <article class="blog-card">
+                <a href="/blog/<%= p.slug %>" class="blog-thumb">
+                  <%- include('partials/blog-thumb', { p }) %>
+                </a>
+                <div class="blog-card-body">
+                  <span class="blog-date"><%= formatDate(p.created_at) %></span>
+                  <h3><a href="/blog/<%= p.slug %>"><%= p.title %></a></h3>
+                  <a href="/blog/<%= p.slug %>" class="learn-more">Read Article →</a>
+                </div>
+              </article>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+    <% } %>
+  </main>
+
+  <%- include('partials/footer') %>
+  <script src="/js/main.js"></script>
+  <%- include('partials/tawk') %>
+</body>
+</html>

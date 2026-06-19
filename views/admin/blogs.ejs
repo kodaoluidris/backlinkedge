@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/admin-head') %>
+  <title>Blog Posts — Admin</title>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <%- include('../partials/admin-sidebar', { active, adminEmail }) %>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div>
+          <h1>Blog Posts</h1>
+          <p><%= posts.length %> post<%= posts.length === 1 ? '' : 's' %> · manage your articles.</p>
+        </div>
+        <a href="/admin/blogs/new" class="btn btn-primary btn-sm">+ New Post</a>
+      </header>
+
+      <% if (flash) { %>
+        <div class="alert alert-ok">
+          <% if (flash === 'created') { %>Post created successfully.<% } %>
+          <% if (flash === 'updated') { %>Post updated successfully.<% } %>
+          <% if (flash === 'deleted') { %>Post deleted.<% } %>
+        </div>
+      <% } %>
+
+      <section class="panel">
+        <% if (posts.length === 0) { %>
+          <p class="empty">No posts yet. Click <strong>New Post</strong> to write your first article.</p>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Post</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% posts.forEach(function(p){ %>
+                  <tr>
+                    <td>
+                      <div class="cell-customer">
+                        <% const rm = p.image ? resolveMedia(p.image, p.media_type) : null; %>
+                        <span class="blog-row-thumb">
+                          <% if (rm && rm.kind === 'embed' && rm.thumb) { %>
+                            <img src="<%= rm.thumb %>" alt="" /><span class="row-play">▶</span>
+                          <% } else if (rm && rm.kind === 'embed') { %>
+                            <span class="row-play">▶</span>
+                          <% } else if (rm && rm.kind === 'video') { %>
+                            <video src="<%= rm.src %>" muted preload="metadata"></video><span class="row-play">▶</span>
+                          <% } else if (rm && rm.kind === 'image') { %>
+                            <img src="<%= rm.src %>" alt="" />
+                          <% } else { %>—<% } %>
+                        </span>
+                        <span>
+                          <strong><%= p.title %></strong>
+                          <small>/blog/<%= p.slug %></small>
+                        </span>
+                      </div>
+                    </td>
+                    <td><span class="status status-<%= p.status === 'published' ? 'active' : 'canceled' %>"><%= p.status %></span></td>
+                    <td class="muted"><%= formatDate(p.created_at) %></td>
+                    <td>
+                      <div class="row-actions">
+                        <a href="/blog/<%= p.slug %>" target="_blank" rel="noopener" class="btn btn-outline btn-xs">View</a>
+                        <a href="/admin/blogs/<%= p.id %>/edit" class="btn btn-outline btn-xs">Edit</a>
+                        <form method="POST" action="/admin/blogs/<%= p.id %>/delete"
+                              onsubmit="return confirm('Delete “<%= p.title.replace(/'/g, " ") %>”? This cannot be undone.');">
+                          <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

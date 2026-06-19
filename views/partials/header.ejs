@@ -1,0 +1,34 @@
+<header class="site-header" id="top">
+  <div class="container nav-bar">
+    <a href="/" class="brand" aria-label="<%= site.brand %> home">
+      <img src="/img/logo/backlinkedge-logo.png" alt="<%= site.brand %>" class="brand-logo" />
+    </a>
+
+    <nav class="main-nav" id="main-nav" aria-label="Primary">
+      <%
+        const cp = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '/';
+        function navActive(href) {
+          if (href === '/blog') return cp.indexOf('/blog') === 0;
+          if (href === '/') return cp === '/';
+          return false; // hash links are handled by the scrollspy on the home page
+        }
+        function sectionId(href) {
+          const i = href.indexOf('#');
+          return i === -1 ? '' : href.slice(i + 1);
+        }
+      %>
+      <% site.nav.forEach(function(item){ %>
+        <a href="<%= item.href %>"
+           class="nav-link<%= navActive(item.href) ? ' is-active' : '' %>"
+           <% if (sectionId(item.href)) { %>data-section="<%= sectionId(item.href) %>"<% } %>><%= item.label %></a>
+      <% }); %>
+    </nav>
+
+    <div class="nav-actions">
+      <a href="#contact" class="btn btn-primary btn-sm">Get Free SEO Audit</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>

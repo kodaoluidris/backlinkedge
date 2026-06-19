@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/admin-head') %>
+  <title>Dashboard — Admin</title>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <%- include('../partials/admin-sidebar', { active, adminEmail }) %>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Overview of revenue, subscriptions &amp; activity.</p>
+        </div>
+        <a href="/admin/transactions" class="btn btn-primary btn-sm">View all transactions →</a>
+      </header>
+
+      <% if (!stripeReady) { %>
+        <div class="alert alert-warn">
+          ⚠️ Stripe isn’t configured yet — add your <code>STRIPE_SECRET_KEY</code> to <code>.env</code> to start recording live payments. The dashboard below reflects data already stored.
+        </div>
+      <% } %>
+
+      <%
+        const money = (cents) => '$' + (cents/100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const maxDaily = Math.max(1, ...a.daily.map(d => d.revenue));
+      %>
+
+      <!-- KPI cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Total Revenue</span>
+          <span class="kpi-value"><%= money(a.totalRevenue) %></span>
+          <span class="kpi-foot">All-time paid invoices</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">MRR</span>
+          <span class="kpi-value"><%= money(a.mrr) %></span>
+          <span class="kpi-foot">Active recurring revenue</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Active Subscriptions</span>
+          <span class="kpi-value"><%= a.activeSubs.toLocaleString() %></span>
+          <span class="kpi-foot"><%= a.customers.toLocaleString() %> total customers</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Payments</span>
+          <span class="kpi-value"><%= a.txCount.toLocaleString() %></span>
+          <span class="kpi-foot">Successful transactions</span>
+        </div>
+      </section>
+
+      <section class="admin-cols">
+        <!-- Revenue chart -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Revenue — last 30 days</h2>
+          </div>
+          <% if (a.daily.length === 0) { %>
+            <p class="empty">No revenue recorded in the last 30 days yet.</p>
+          <% } else { %>
+            <div class="bar-chart">
+              <% a.daily.forEach(function(d){ %>
+                <div class="bar-col" title="<%= d.day %> — <%= money(d.revenue) %> (<%= d.count %>)">
+                  <div class="bar" style="height: <%= Math.max(4, Math.round((d.revenue / maxDaily) * 100)) %>%"></div>
+                </div>
+              <% }); %>
+            </div>
+            <div class="bar-axis">
+              <span><%= a.daily[0].day %></span>
+              <span><%= a.daily[a.daily.length - 1].day %></span>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Revenue by plan -->
+        <div class="panel">
+          <div class="panel-head"><h2>Revenue by plan</h2></div>
+          <% if (a.byPlan.length === 0) { %>
+            <p class="empty">No data yet.</p>
+          <% } else { %>
+            <ul class="plan-breakdown">
+              <% a.byPlan.forEach(function(p){
+                   const pct = a.totalRevenue ? Math.round((p.revenue / a.totalRevenue) * 100) : 0; %>
+                <li>
+                  <div class="plan-row">
+                    <span><%= p.plan || 'Unknown' %></span>
+                    <strong><%= money(p.revenue) %></strong>
+                  </div>
+                  <div class="plan-bar"><span style="width: <%= pct %>%"></span></div>
+                  <small><%= p.count %> payment<%= p.count === 1 ? '' : 's' %> · <%= pct %>%</small>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </div>
+      </section>
+
+      <!-- Recent transactions -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Recent transactions</h2>
+          <a href="/admin/transactions" class="link">See all</a>
+        </div>
+        <%- include('../partials/tx-table', { transactions: recent, money: null }) %>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

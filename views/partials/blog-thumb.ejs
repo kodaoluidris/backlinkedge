@@ -1,0 +1,21 @@
+<%# Renders a blog card thumbnail for post `p`: embed poster, video, image, or icon fallback. %>
+<% const m = resolveMedia(p.image, p.media_type); %>
+<% if (m && m.kind === 'embed') { %>
+  <span class="blog-thumb-video">
+    <% if (m.thumb) { %>
+      <img src="<%= m.thumb %>" alt="<%= p.title %>" loading="lazy" />
+    <% } else { %>
+      <span class="blog-thumb-fallback"><%- include('icon', { name: 'content' }) %></span>
+    <% } %>
+    <span class="play-badge" aria-hidden="true">▶</span>
+  </span>
+<% } else if (m && m.kind === 'video') { %>
+  <span class="blog-thumb-video">
+    <video src="<%= m.src %>" preload="metadata" muted playsinline></video>
+    <span class="play-badge" aria-hidden="true">▶</span>
+  </span>
+<% } else if (m && m.kind === 'image') { %>
+  <img src="<%= m.src %>" alt="<%= p.title %>" loading="lazy" />
+<% } else { %>
+  <span class="blog-thumb-fallback"><%- include('icon', { name: 'content' }) %></span>
+<% } %>

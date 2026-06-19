@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — Backlinkedge SEO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <div class="message-screen">
+    <div class="login-card">
+      <a href="/" class="brand" style="justify-content:center;margin-bottom:8px">
+        <img src="/img/logo/backlinkedge-logo.png" alt="Backlinkedge SEO" class="brand-logo" />
+      </a>
+      <h1>Admin Login</h1>
+      <p class="login-sub">Sign in to view transactions &amp; analytics.</p>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/login" class="login-form">
+        <label>
+          <span>Email</span>
+          <input type="email" name="email" placeholder="admin@backlinkedge.test" required autofocus />
+        </label>
+        <label>
+          <span>Password</span>
+          <input type="password" name="password" placeholder="••••••••" required />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+      <a href="/" class="back-link">← Back to site</a>
+    </div>
+  </div>
+</body>
+</html>

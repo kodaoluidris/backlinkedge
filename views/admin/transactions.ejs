@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/admin-head') %>
+  <title>Transactions — Admin</title>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <%- include('../partials/admin-sidebar', { active, adminEmail }) %>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div>
+          <h1>Transactions</h1>
+          <p><%= transactions.length %> payment<%= transactions.length === 1 ? '' : 's' %> recorded.</p>
+        </div>
+        <input type="search" id="tx-search" class="admin-search" placeholder="Search customer, email, plan…" />
+      </header>
+
+      <section class="panel">
+        <%- include('../partials/tx-table', { transactions }) %>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Simple client-side filter
+    const input = document.getElementById('tx-search');
+    if (input) {
+      input.addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.data-table tbody tr').forEach(function (row) {
+          row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    }
+  </script>
+</body>
+</html>
