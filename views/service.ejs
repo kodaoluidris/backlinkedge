@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <main>
+    <section class="page-hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container">
+        <a href="/#services" class="post-back">← All services</a>
+        <span class="service-hero-icon" style="--c:<%= service.color %>"><%- include('partials/icon', { name: service.icon }) %></span>
+        <p class="section-tag">Our Services</p>
+        <h1 class="page-title"><%= service.name %></h1>
+        <p class="page-sub"><%= service.tagline %></p>
+        <div class="service-hero-cta">
+          <a href="/#pricing" class="btn btn-primary">View Plans <%- include('partials/icon', { name: 'arrow' }) %></a>
+          <a href="/#contact" class="btn btn-ghost">Get a Free Audit</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:24px">
+      <div class="container post-narrow">
+        <div class="post-content service-content">
+          <%- service.content %>
+        </div>
+
+        <div class="service-foot">
+          <h3>Ready to get started with <%= service.name %>?</h3>
+          <p>Book a free strategy call and we'll map out exactly how we'd grow your rankings.</p>
+          <div class="about-cta">
+            <a href="/#contact" class="btn btn-primary">Get Free SEO Audit <%- include('partials/icon', { name: 'arrow' }) %></a>
+            <a href="/#pricing" class="btn btn-ghost">See Pricing</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Other services -->
+    <section class="section section-alt">
+      <div class="container">
+        <h2 class="section-title" style="margin-bottom:8px">Explore other services</h2>
+        <div class="card-grid" style="margin-top:40px">
+          <% services.filter(function(s){ return s.slug !== service.slug; }).forEach(function(s){ %>
+            <article class="service-card">
+              <span class="service-icon" style="--c:<%= s.color %>"><%- include('partials/icon', { name: s.icon }) %></span>
+              <div class="service-body">
+                <h3><%= s.name %></h3>
+                <p><%= s.summary %></p>
+                <a href="/services/<%= s.slug %>" class="learn-more">Learn More →</a>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+  <script src="/js/main.js"></script>
+  <%- include('partials/tawk') %>
+</body>
+</html>

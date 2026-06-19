@@ -191,20 +191,13 @@
         <p class="section-sub">Data-driven strategies. Ethical SEO practices. Real results.</p>
 
         <div class="card-grid">
-          <% [
-            ['link','Link Building','High-quality, white-hat backlinks from authoritative websites that boost rankings and domain authority.','#4aa8ff'],
-            ['code','Technical SEO','We fix technical issues, improve site speed, indexing, and create a strong foundation for higher rankings.','#00c2a8'],
-            ['pin','Local SEO','Dominate local search results with Google Business Profile optimization and local citation building.','#ffb13c'],
-            ['ai','GEO / AI SEO','Optimize for AI search engines like ChatGPT, Gemini, Claude & Google AI Overviews to stay ahead.','#7c5cff'],
-            ['content','Content Marketing','SEO-optimized content that attracts, engages, and converts your target audience into customers.','#4aa8ff'],
-            ['consulting','SEO Consulting','Monthly strategy calls, detailed reports, and expert guidance to achieve your business goals.','#00c2a8']
-          ].forEach(function(c){ %>
+          <% services.forEach(function(s){ %>
             <article class="service-card">
-              <span class="service-icon" style="--c:<%= c[3] %>"><%- include('partials/icon', { name: c[0] }) %></span>
+              <span class="service-icon" style="--c:<%= s.color %>"><%- include('partials/icon', { name: s.icon }) %></span>
               <div class="service-body">
-                <h2><%= c[1] %></h2>
-                <p><%= c[2] %></p>
-                <a href="#contact" class="learn-more">Learn More →</a>
+                <h2><%= s.name %></h2>
+                <p><%= s.summary %></p>
+                <a href="/services/<%= s.slug %>" class="learn-more">Learn More →</a>
               </div>
             </article>
           <% }); %>

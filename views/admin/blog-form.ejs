@@ -3,6 +3,8 @@
 <head>
   <%- include('../partials/admin-head') %>
   <title><%= post && post.id ? 'Edit' : 'New' %> Post — Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 </head>
 <body class="admin-body">
   <div class="admin-layout">
@@ -81,11 +83,37 @@
         </div>
 
         <div class="form-row">
-          <label class="form-field">
-            <span>Content <em>*</em></span>
-            <textarea name="content" rows="16" placeholder="Write your article here. Leave a blank line between paragraphs."><%= v.content || '' %></textarea>
-            <small class="hint">Plain text — blank lines start new paragraphs. (HTML is escaped for safety.)</small>
-          </label>
+          <span class="form-label">Content <em>*</em></span>
+          <!-- Rich text editor (Quill). Writes HTML into the hidden textarea on submit. -->
+          <div id="editor-wrap">
+            <div id="editor-toolbar">
+              <span class="ql-formats">
+                <select class="ql-header"><option value="2"></option><option value="3"></option><option selected></option></select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-strike"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+                <button class="ql-blockquote"></button>
+                <button class="ql-code-block"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-link"></button>
+                <button class="ql-image"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-clean"></button>
+              </span>
+            </div>
+            <div id="editor"><%- v.content || '' %></div>
+          </div>
+          <textarea name="content" id="content-input" hidden><%= v.content || '' %></textarea>
+          <small class="hint">Use the toolbar to style your content — headings, bold, lists, links, quotes and more.</small>
         </div>
 
         <div class="form-actions">
@@ -106,6 +134,46 @@
         label.textContent = icon + f.name;
       }
     });
+
+    // Rich text editor (Quill)
+    (function () {
+      const input = document.getElementById('content-input');
+      const editorEl = document.getElementById('editor');
+      const wrap = document.getElementById('editor-wrap');
+      if (!editorEl || !input) return;
+
+      // Fallback: if the Quill library didn't load (e.g. offline/CDN blocked),
+      // reveal the plain textarea so content can still be written.
+      if (!window.Quill) {
+        if (wrap) wrap.style.display = 'none';
+        input.hidden = false;
+        input.rows = 16;
+        return;
+      }
+
+      const quill = new Quill('#editor', {
+        theme: 'snow',
+        placeholder: 'Write your article here…',
+        modules: { toolbar: '#editor-toolbar' }
+      });
+
+      // Keep the hidden textarea in sync so it posts with the form.
+      function sync() {
+        const html = quill.getText().trim().length ? quill.root.innerHTML : '';
+        input.value = html;
+      }
+      quill.on('text-change', sync);
+      sync();
+
+      const form = input.closest('form');
+      form.addEventListener('submit', function (e) {
+        sync();
+        if (!quill.getText().trim().length) {
+          e.preventDefault();
+          alert('Please add some content before saving.');
+        }
+      });
+    })();
   </script>
 </body>
 </html>

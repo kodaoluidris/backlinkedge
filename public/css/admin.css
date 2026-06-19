@@ -215,3 +215,27 @@
 .admin-brand { padding: 4px 6px; }
 .admin-brand .brand-logo { height: 30px; width: auto; max-width: 100%; }
 .login-card .brand-logo { height: 34px; width: auto; }
+
+/* ---------- Rich text editor (Quill) — dark theme ---------- */
+#editor-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.05); }
+#editor-toolbar.ql-toolbar.ql-snow,
+.ql-toolbar.ql-snow { border: 0; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.03); }
+.ql-container.ql-snow { border: 0; font-family: inherit; }
+.ql-editor { min-height: 320px; font-size: 15px; line-height: 1.7; color: var(--text); }
+.ql-editor.ql-blank::before { color: var(--muted-2); font-style: normal; }
+.ql-editor h2 { font-size: 24px; }
+.ql-editor h3 { font-size: 19px; }
+.ql-editor a { color: var(--accent); }
+.ql-editor blockquote { border-left: 3px solid var(--accent); color: var(--muted); }
+.ql-editor pre.ql-syntax { background: #0b1224; color: #d6deef; border: 1px solid var(--border); }
+/* Toolbar icon colours for dark bg */
+.ql-snow .ql-stroke { stroke: var(--muted); }
+.ql-snow .ql-fill { fill: var(--muted); }
+.ql-snow .ql-picker { color: var(--muted); }
+.ql-snow .ql-picker-options { background: var(--surface-2); border-color: var(--border) !important; }
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent); }
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accent); }
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active { color: var(--accent); }

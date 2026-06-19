@@ -7,6 +7,7 @@ const session = require('express-session');
 const { PLANS, priceLabel } = require('./config/plans');
 const { publishableKey } = require('./config/stripe');
 const site = require('./config/site');
+const { SERVICES, getService } = require('./config/services');
 
 const webhookRouter = require('./routes/webhook');
 const checkoutRouter = require('./routes/checkout');
@@ -50,10 +51,11 @@ app.use(session({
   }
 }));
 
-// Expose live-chat config + current path to every view
+// Expose live-chat config, current path, and services to every view
 app.use((req, res, next) => {
   res.locals.tawk = tawk;
   res.locals.currentPath = req.path;
+  res.locals.services = SERVICES; // used by the navbar dropdown everywhere
   next();
 });
 
@@ -67,6 +69,25 @@ app.get('/', (req, res) => {
     meta:'Helping businesses grow with white-hat backlinks, technical SEO, local SEO, and AI search optimization. Get higher rankings and more leads with Backlinkedge SEO.',
     priceLabel,
     publishableKey
+  });
+});
+
+// Individual service pages
+app.get('/services/:slug', (req, res) => {
+  const service = getService(req.params.slug);
+  if (!service) {
+    return res.status(404).render('message', {
+      title: 'Service not found',
+      heading: 'Service not found',
+      body: 'That service doesn’t exist. Browse all of our services instead.',
+      cta: { href: '/#services', label: 'View all services' }
+    });
+  }
+  res.render('service', {
+    site,
+    title: `${service.name} — Backlinkedge SEO`,
+    meta: service.summary,
+    service
   });
 });
 

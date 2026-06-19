@@ -8,7 +8,7 @@ const site = {
   nav: [
     { label: 'Home', href: '/' },
     { label: 'About Us', href: '/#about' },
-    { label: 'Services', href: '/#services' },
+    { label: 'Services', href: '/#services', dropdown: 'services' },
     { label: 'Case Studies', href: '/#results' },
     { label: 'Pricing', href: '/#pricing' },
     { label: 'Contact', href: '/#contact' },
