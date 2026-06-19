@@ -62,8 +62,9 @@ app.get('/', (req, res) => {
   res.render('index', {
     site,
     page: 'home',
-    title: 'Backlinkedge SEO — Build Authority. Rank Higher.',
+    title: 'Backlinkedge SEO | Link Building & SEO Agency for Organic Growth.',
     plans: PLANS,
+    meta:'Helping businesses grow with white-hat backlinks, technical SEO, local SEO, and AI search optimization. Get higher rankings and more leads with Backlinkedge SEO.',
     priceLabel,
     publishableKey
   });
