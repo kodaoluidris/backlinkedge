@@ -45,15 +45,24 @@ async function run(sql, params = []) {
 
 // Creates the database (if missing) and all tables. Safe to run repeatedly.
 async function init() {
-  // First connect without a database to ensure it exists.
-  const bootstrap = await mysql.createConnection({
-    host: DB.host, port: DB.port, user: DB.user, password: DB.password, multipleStatements: false
-  });
-  await bootstrap.query(
-    `CREATE DATABASE IF NOT EXISTS \`${DB.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
-  );
-  await bootstrap.end();
+  // Best-effort: try to create the database. On managed/shared hosts (freedb,
+  // PlanetScale, etc.) the database is pre-created and the user has NO privilege
+  // to run CREATE DATABASE — that's fine, we just skip it and use the existing DB.
+  try {
+    const bootstrap = await mysql.createConnection({
+      host: DB.host, port: DB.port, user: DB.user, password: DB.password, multipleStatements: false
+    });
+    await bootstrap.query(
+      `CREATE DATABASE IF NOT EXISTS \`${DB.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+    await bootstrap.end();
+  } catch (err) {
+    console.warn(
+      `  ℹ Skipping CREATE DATABASE (using existing "${DB.database}"). Reason: ${err.code || err.message}`
+    );
+  }
 
+  // Tables are created in the existing database via the pool.
   await query(`
     CREATE TABLE IF NOT EXISTS customers (
       id                  INT AUTO_INCREMENT PRIMARY KEY,
