@@ -95,19 +95,28 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize the database (creates DB + tables if needed), then start the server.
+// Start the web server FIRST so the public site is always available, even if the
+// database is down. Then try to connect to MySQL (and create the schema) in the
+// background, retrying until it succeeds. DB-backed features degrade gracefully
+// until the connection is up.
 const db = require('./db');
-db.init()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`\n  Backlinkedge SEO running at http://localhost:${PORT}`);
-      console.log(`  Admin panel:  http://localhost:${PORT}/admin\n`);
+
+app.listen(PORT, () => {
+  console.log(`\n  Backlinkedge SEO running at http://localhost:${PORT}`);
+  console.log(`  Admin panel:  http://localhost:${PORT}/admin\n`);
+});
+
+function initDbWithRetry(attempt = 1) {
+  db.init()
+    .then(() => console.log('  ✓ MySQL connected — database & tables ready.\n'))
+    .catch((err) => {
+      const wait = Math.min(30, attempt * 5); // back off up to 30s
+      console.warn(
+        `  ⚠ MySQL not reachable (${err.code || err.message}). ` +
+        `The public site still works; database features are offline. ` +
+        `Retrying in ${wait}s…`
+      );
+      setTimeout(() => initDbWithRetry(attempt + 1), wait * 1000);
     });
-  })
-  .catch((err) => {
-    console.error('\n  ✗ Could not connect to MySQL.');
-    console.error(`    ${err.message}`);
-    console.error('    Check your DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME in .env,');
-    console.error('    and make sure your MySQL server is running.\n');
-    process.exit(1);
-  });
+}
+initDbWithRetry();

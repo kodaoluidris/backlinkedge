@@ -9,9 +9,14 @@ const { resolveMedia } = require('../lib/media');
 // Wrap async handlers so rejections reach Express' error handler.
 const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// Public blog list
+// Public blog list — degrades to an empty list if the database is unavailable.
 router.get('/', ah(async (req, res) => {
-  const posts = await dbApi.listBlogs({ includeDrafts: false, limit: 100 });
+  let posts = [];
+  try {
+    posts = await dbApi.listBlogs({ includeDrafts: false, limit: 100 });
+  } catch (err) {
+    console.warn('Blog list unavailable (DB offline):', err.code || err.message);
+  }
   res.render('blog', {
     site,
     title: 'Blog — Backlinkedge SEO',
@@ -24,7 +29,18 @@ router.get('/', ah(async (req, res) => {
 
 // Single post
 router.get('/:slug', ah(async (req, res) => {
-  const post = await dbApi.getBlogBySlug(req.params.slug);
+  let post = null;
+  let more = [];
+  try {
+    post = await dbApi.getBlogBySlug(req.params.slug);
+    if (post && post.status === 'published') {
+      more = (await dbApi.listBlogs({ includeDrafts: false, limit: 4 }))
+        .filter((p) => p.id !== post.id)
+        .slice(0, 3);
+    }
+  } catch (err) {
+    console.warn('Blog post unavailable (DB offline):', err.code || err.message);
+  }
   if (!post || post.status !== 'published') {
     return res.status(404).render('message', {
       title: 'Post not found',
@@ -33,10 +49,6 @@ router.get('/:slug', ah(async (req, res) => {
       cta: { href: '/blog', label: 'Back to blog' }
     });
   }
-  // A few recent posts for the "more reading" rail
-  const more = (await dbApi.listBlogs({ includeDrafts: false, limit: 4 }))
-    .filter((p) => p.id !== post.id)
-    .slice(0, 3);
 
   res.render('blog-post', {
     site,
