@@ -8,6 +8,7 @@ const { PLANS, priceLabel } = require('./config/plans');
 const { publishableKey } = require('./config/stripe');
 const site = require('./config/site');
 const { SERVICES, getService } = require('./config/services');
+const { organizationSchema, homeSchemas } = require('./config/schema');
 
 const webhookRouter = require('./routes/webhook');
 const checkoutRouter = require('./routes/checkout');
@@ -56,6 +57,7 @@ app.use((req, res, next) => {
   res.locals.tawk = tawk;
   res.locals.currentPath = req.path;
   res.locals.services = SERVICES; // used by the navbar dropdown everywhere
+  res.locals.schemas = [organizationSchema()]; // Organization JSON-LD site-wide (overridden per-page)
   next();
 });
 
@@ -68,7 +70,8 @@ app.get('/', (req, res) => {
     plans: PLANS,
     meta:'Helping businesses grow with white-hat backlinks, technical SEO, local SEO, and AI search optimization. Get higher rankings and more leads with Backlinkedge SEO.',
     priceLabel,
-    publishableKey
+    publishableKey,
+    schemas: homeSchemas() // Organization + LocalBusiness + FAQ + Review
   });
 });
 
