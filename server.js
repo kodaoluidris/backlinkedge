@@ -7,7 +7,7 @@ const session = require('express-session');
 const { PLANS, priceLabel } = require('./config/plans');
 const { publishableKey } = require('./config/stripe');
 const site = require('./config/site');
-const { SERVICES, getService } = require('./config/services');
+const { SERVICES, getService, DEFAULT_HERO_POINTS } = require('./config/services');
 const { organizationSchema, homeSchemas } = require('./config/schema');
 
 const webhookRouter = require('./routes/webhook');
@@ -90,7 +90,8 @@ app.get('/services/:slug', (req, res) => {
     site,
     title: `${service.name} — Backlinkedge SEO`,
     meta: service.summary,
-    service
+    service,
+    DEFAULT_HERO_POINTS
   });
 });
 

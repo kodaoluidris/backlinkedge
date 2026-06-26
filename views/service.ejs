@@ -7,46 +7,263 @@
   <%- include('partials/header') %>
 
   <main>
-    <section class="page-hero">
+    <!-- ============ HERO ============ -->
+    <section class="svc-hero">
       <div class="hero-glow" aria-hidden="true"></div>
-      <div class="container">
-        <a href="/#services" class="post-back">← All services</a>
-        <span class="service-hero-icon" style="--c:<%= service.color %>"><%- include('partials/icon', { name: service.icon }) %></span>
-        <p class="section-tag">Our Services</p>
-        <h1 class="page-title"><%= service.name %></h1>
-        <p class="page-sub"><%= service.tagline %></p>
-        <div class="service-hero-cta">
-          <a href="/#pricing" class="btn btn-primary">View Plans <%- include('partials/icon', { name: 'arrow' }) %></a>
-          <a href="/#contact" class="btn btn-ghost">Get a Free Audit</a>
-        </div>
-      </div>
-    </section>
+      <div class="container svc-hero-grid">
+        <div class="svc-hero-copy">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/">Home</a><span>/</span><a href="/#services">Services</a><span>/</span><strong><%= service.name %></strong>
+          </nav>
+          <h1 class="svc-hero-title">
+            <%= service.heading || service.name %>
+            <% if (service.headingAccent) { %><span class="accent"><%= service.headingAccent %></span><% } %>
+          </h1>
+          <% if (service.subheading) { %><p class="svc-hero-sub"><%= service.subheading %></p><% } %>
+          <% var introArr = Array.isArray(service.intro) ? service.intro : (service.intro ? [service.intro] : []); %>
+          <% introArr.slice(0,2).forEach(function(p){ %><p class="svc-hero-lead"><%= p %></p><% }); %>
 
-    <section class="section" style="padding-top:24px">
-      <div class="container post-narrow">
-        <div class="post-content service-content">
-          <%- service.content %>
+          <% if (service.heroFeatures && service.heroFeatures.length) { %>
+            <ul class="hero-features-row">
+              <% service.heroFeatures.forEach(function(f){ %>
+                <li><span class="hf-ico" style="--c:<%= service.color %>"><%- include('partials/icon', { name: f.icon || 'check' }) %></span><span><%= f.label %></span></li>
+              <% }); %>
+            </ul>
+          <% } else if (service.heroPoints && service.heroPoints.length) { %>
+            <ul class="hero-points">
+              <% service.heroPoints.forEach(function(p){ %>
+                <li><span class="hp-check" style="--c:<%= service.color %>"><%- include('partials/icon', { name: 'check' }) %></span>
+                  <span class="hp-text"><strong><%= p[0] %></strong><small><%= p[1] %></small></span></li>
+              <% }); %>
+            </ul>
+          <% } %>
+
+          <div class="svc-hero-cta">
+            <a href="<%= (service.ctaPrimary && service.ctaPrimary.href) || '/#contact' %>" class="btn btn-primary"><%= (service.ctaPrimary && service.ctaPrimary.label) || 'Get Free SEO Audit' %> <%- include('partials/icon', { name: 'arrow' }) %></a>
+            <a href="<%= (service.ctaSecondary && service.ctaSecondary.href) || '#offerings' %>" class="btn btn-outline"><%= (service.ctaSecondary && service.ctaSecondary.label) || 'View Our Services' %></a>
+          </div>
         </div>
 
-        <div class="service-foot">
-          <h3>Ready to get started with <%= service.name %>?</h3>
-          <p>Book a free strategy call and we'll map out exactly how we'd grow your rankings.</p>
-          <div class="about-cta">
-            <a href="/#contact" class="btn btn-primary">Get Free SEO Audit <%- include('partials/icon', { name: 'arrow' }) %></a>
-            <a href="/#pricing" class="btn btn-ghost">See Pricing</a>
+        <!-- Illustration -->
+        <div class="svc-hero-visual" aria-hidden="true">
+          <span class="svc-hero-mark" style="--c:<%= service.color %>"><%- include('partials/icon', { name: service.icon }) %></span>
+          <div class="viz-card viz-traffic">
+            <span class="viz-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <div class="viz-head"><span>Organic Traffic</span><strong class="up">▲ +178%</strong></div>
+            <svg viewBox="0 0 320 110" preserveAspectRatio="none" class="viz-chart">
+              <defs>
+                <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#16b981" stop-opacity="0.30"/>
+                  <stop offset="100%" stop-color="#16b981" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,96 C42,92 58,72 92,74 C128,76 144,52 184,52 C220,52 250,30 286,22 C302,18 312,13 320,8 L320,110 L0,110 Z" fill="url(#vg)"/>
+              <path d="M0,96 C42,92 58,72 92,74 C128,76 144,52 184,52 C220,52 250,30 286,22 C302,18 312,13 320,8"
+                    fill="none" stroke="#16b981" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="viz-card viz-da">
+            <span class="viz-da-label">Domain Authority</span>
+            <div class="viz-gauge"><span>DA</span><strong>62</strong></div>
+            <span class="viz-da-up up">▲ growing</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Other services -->
+    <!-- ============ WHY + STRATEGY ============ -->
+    <% if (service.why || service.strategy) { %>
+    <section class="section">
+      <div class="container">
+        <div class="why-strategy<%= service.strategy ? ' two' : '' %>">
+          <% if (service.why) { %>
+          <div class="why-col">
+            <h2 class="block-title"><%= service.why.title %></h2>
+            <% if (service.why.intro) { %><p class="block-text"><%= service.why.intro %></p><% } %>
+            <% if (service.why.lead) { %><p class="block-text"><strong><%= service.why.lead %></strong></p><% } %>
+            <% if (service.why.bullets && service.why.bullets.length) { %>
+              <ul class="check-list">
+                <% service.why.bullets.forEach(function(b){ %><li><span class="ck">✓</span><%= b %></li><% }); %>
+              </ul>
+            <% } else if (service.why.items && service.why.items.length) { %>
+              <ul class="check-list">
+                <% service.why.items.forEach(function(it){ %><li><span class="ck">✓</span><strong><%= it.title %></strong> — <%= it.text %></li><% }); %>
+              </ul>
+            <% } %>
+            <% if (service.why.outro) { %><p class="block-text muted"><%= service.why.outro %></p><% } %>
+          </div>
+          <% } %>
+
+          <% if (service.strategy) { %>
+          <div class="strategy-col">
+            <h2 class="block-title"><%= service.strategy.title %></h2>
+            <% if (service.strategy.intro) { %><p class="block-text"><%= service.strategy.intro %></p><% } %>
+            <div class="strategy-grid">
+              <% service.strategy.items.forEach(function(it){ %>
+                <div class="strategy-item">
+                  <span class="strategy-ico" style="--c:<%= service.color %>"><%- include('partials/icon', { name: it.icon || 'check' }) %></span>
+                  <div><strong><%= it.title %></strong><p><%= it.text %></p></div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ WHAT MAKES US DIFFERENT ============ -->
+    <% if (service.different && service.different.items) { %>
+    <section class="section section-alt">
+      <div class="container">
+        <h2 class="section-title"><%= service.different.title %></h2>
+        <% if (service.different.intro) { %><p class="section-sub"><%= service.different.intro %></p><% } %>
+        <div class="feature-grid six">
+          <% service.different.items.forEach(function(it){ %>
+            <article class="feature-card" style="--c:<%= service.color %>">
+              <span class="feature-icon"><%- include('partials/icon', { name: it.icon || 'check' }) %></span>
+              <h3><%= it.title %></h3>
+              <p><%= it.text %></p>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ OFFERINGS ============ -->
+    <% if (service.offerings && service.offerings.items) { %>
+    <section class="section<%= service.different ? '' : ' section-alt' %>" id="offerings">
+      <div class="container">
+        <h2 class="section-title"><%= service.offerings.title %></h2>
+        <% if (service.offerings.sub) { %><p class="section-sub"><%= service.offerings.sub %></p><% } %>
+        <div class="card-grid">
+          <% service.offerings.items.forEach(function(it){ %>
+            <article class="service-card" style="--c:<%= service.color %>">
+              <span class="service-icon"><%- include('partials/icon', { name: it.icon || 'check' }) %></span>
+              <div class="service-body">
+                <h3><%= it.title %></h3>
+                <p><%= it.text %></p>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ PROCESS (older services) ============ -->
+    <% if (service.process && service.process.items) { %>
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title"><%= service.process.title %></h2>
+        <% if (service.process.sub) { %><p class="section-sub"><%= service.process.sub %></p><% } %>
+        <ol class="proc-flow">
+          <% service.process.items.forEach(function(it, i){ %>
+            <li class="proc-step" style="--c:<%= service.color %>">
+              <span class="proc-num"><%= i + 1 %></span>
+              <h4><%= it.title %></h4>
+              <p><%= it.text %></p>
+            </li>
+          <% }); %>
+        </ol>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ GUIDE (older services) ============ -->
+    <% if (service.guide && service.guide.items) { %>
+    <section class="section section-alt">
+      <div class="container">
+        <div class="guide-panel">
+          <h2 class="section-title"><%= service.guide.title %></h2>
+          <% if (service.guide.sub) { %><p class="section-sub"><%= service.guide.sub %></p><% } %>
+          <div class="guide-grid">
+            <% service.guide.items.forEach(function(it, i){ %>
+              <article class="guide-card" style="--c:<%= service.color %>">
+                <span class="guide-num"><%= String(i + 1).padStart(2, '0') %></span>
+                <h4><%= it.title %></h4>
+                <p><%= it.text %></p>
+              </article>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ INDUSTRIES ============ -->
+    <% if (service.industries && service.industries.items) { %>
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title"><%= service.industries.title %></h2>
+        <% if (service.industries.sub) { %><p class="section-sub"><%= service.industries.sub %></p><% } %>
+        <ul class="industries-row">
+          <% service.industries.items.forEach(function(it){ %>
+            <li class="industry"><span class="industry-ico" style="--c:<%= service.color %>"><%- include('partials/icon', { name: it.icon || 'check' }) %></span><span><%= it.label %></span></li>
+          <% }); %>
+        </ul>
+        <% if (service.industries.outro) { %><p class="section-sub" style="margin-top:28px"><%= service.industries.outro %></p><% } %>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ WHY CHOOSE ============ -->
+    <% if (service.whyChoose) { %>
+    <section class="section section-alt">
+      <div class="container narrow-prose">
+        <h2 class="section-title"><%= service.whyChoose.title %></h2>
+        <% (service.whyChoose.paragraphs || []).forEach(function(p){ %><p class="prose-p"><%= p %></p><% }); %>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ CTA BAND (with stats) ============ -->
+    <section class="svc-cta">
+      <div class="container svc-cta-inner">
+        <div class="svc-cta-copy">
+          <h2>Ready to Grow Your Rankings?</h2>
+          <p>Strong backlinks create stronger rankings. Partner with <%= site.brand %> to build powerful, high-quality backlinks that improve domain authority, increase visibility, and drive long-term SEO growth.</p>
+          <div class="svc-cta-actions">
+            <a href="/#contact" class="btn btn-light">Get Free Audit</a>
+            <a href="/#contact" class="btn btn-cta-ghost">Contact Us Now</a>
+          </div>
+        </div>
+        <% var stats = service.stats && service.stats.length ? service.stats : [['500+','Happy Clients'],['10K+','Backlinks Built'],['98%','Client Satisfaction']]; %>
+        <div class="svc-cta-stats">
+          <% stats.forEach(function(s){ %>
+            <div class="svc-stat"><strong><%= s[0] %></strong><span><%= s[1] %></span></div>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <% if (service.faqs && service.faqs.items) { %>
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title"><%= service.faqs.title || 'Frequently Asked Questions' %></h2>
+        <div class="faq-grid">
+          <% service.faqs.items.forEach(function(f){ %>
+            <article class="faq-card">
+              <span class="faq-q"><span class="faq-badge">?</span><%= f.q %></span>
+              <p class="faq-a"><%= f.a %></p>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- ============ OTHER SERVICES ============ -->
     <section class="section section-alt">
       <div class="container">
         <h2 class="section-title" style="margin-bottom:8px">Explore other services</h2>
         <div class="card-grid" style="margin-top:40px">
           <% services.filter(function(s){ return s.slug !== service.slug; }).forEach(function(s){ %>
-            <article class="service-card">
-              <span class="service-icon" style="--c:<%= s.color %>"><%- include('partials/icon', { name: s.icon }) %></span>
+            <article class="service-card" style="--c:<%= s.color %>">
+              <span class="service-icon"><%- include('partials/icon', { name: s.icon }) %></span>
               <div class="service-body">
                 <h3><%= s.name %></h3>
                 <p><%= s.summary %></p>
