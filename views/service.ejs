@@ -130,6 +130,8 @@
 
     <% if (service.sections && service.sections.length) { %>
       <%# ===================== SECTION-DRIVEN RENDER ===================== %>
+      <% var PALETTE = ['#3aa0ff','#16b981','#7c5cff','#ffb13c','#ff6b6b','#2fd0e8'];
+         function blockColor(block, it, i){ return block.colorful ? PALETTE[i % PALETTE.length] : (it.color || service.color); } %>
       <% service.sections.forEach(function(block){ %>
 
         <% if (block.type === 'features') { %>
@@ -137,12 +139,14 @@
             <div class="container">
               <h2 class="section-title"><%= block.title %> <% if (block.titleAccent) { %><span class="tx-accent"><%= block.titleAccent %></span> <% } %><%= block.titleAfter || '' %></h2>
               <% if (block.sub) { %><p class="section-sub"><%= block.sub %></p><% } %>
-              <div class="feature-grid <%= (block.items.length >= 6) ? 'six' : 'five' %>">
-                <% block.items.forEach(function(it){ %>
-                  <article class="feature-card" style="--c:<%= service.color %>">
+              <div class="feature-grid <%= block.layout === 'row' ? 'rows' : ((block.items.length >= 6) ? 'six' : 'five') %>">
+                <% block.items.forEach(function(it, i){ %>
+                  <article class="feature-card<%= block.layout === 'row' ? ' row' : '' %>" style="--c:<%= blockColor(block, it, i) %>">
                     <span class="feature-icon"><%- include('partials/icon', { name: it.icon || 'check' }) %></span>
-                    <h3><%= it.title %></h3>
-                    <p><%= it.text %></p>
+                    <div class="feature-body">
+                      <h3><%= it.title %></h3>
+                      <p><%= it.text %></p>
+                    </div>
                   </article>
                 <% }); %>
               </div>
@@ -156,7 +160,7 @@
               <% if (block.sub) { %><p class="section-sub"><%= block.sub %></p><% } %>
               <div class="flow-grid" style="grid-template-columns:repeat(<%= block.items.length %>,1fr)">
                 <% block.items.forEach(function(it, i){ %>
-                  <article class="flow-card" style="--c:<%= service.color %>">
+                  <article class="flow-card" style="--c:<%= blockColor(block, it, i) %>">
                     <span class="flow-ico"><%- include('partials/icon', { name: it.icon || 'check' }) %><% if (block.numbered) { %><b class="flow-num"><%= i + 1 %></b><% } %></span>
                     <h3><%= it.title %></h3>
                     <p><%= it.text %></p>
@@ -172,8 +176,8 @@
               <h2 class="section-title"><%= block.title %></h2>
               <% if (block.sub) { %><p class="section-sub"><%= block.sub %></p><% } %>
               <div class="card-grid<%= block.compact ? ' compact' : '' %>"<% if (block.cols) { %> style="grid-template-columns:repeat(<%= block.cols %>,1fr)"<% } %>>
-                <% block.items.forEach(function(it){ %>
-                  <article class="service-card" style="--c:<%= service.color %>">
+                <% block.items.forEach(function(it, i){ %>
+                  <article class="service-card" style="--c:<%= blockColor(block, it, i) %>">
                     <span class="service-icon"><%- include('partials/icon', { name: it.icon || 'check' }) %></span>
                     <div class="service-body">
                       <h3><%= it.title %></h3>
@@ -193,9 +197,12 @@
                   <h2 class="block-title"><%= side.title %> <% if (side.titleAccent) { %><span class="tx-accent"><%= side.titleAccent %></span><% } %></h2>
                   <% if (side.sub) { %><p class="block-text"><%= side.sub %></p><% } %>
                   <% if (side.bullets && side.bullets.length) { %>
-                    <ul class="check-list">
-                      <% side.bullets.forEach(function(b){ %><li><span class="ck">✓</span><%= b %></li><% }); %>
-                    </ul>
+                    <div class="<%= side.image ? 'choose-row' : '' %>">
+                      <ul class="check-list">
+                        <% side.bullets.forEach(function(b){ %><li><span class="ck">✓</span><%= b %></li><% }); %>
+                      </ul>
+                      <% if (side.image) { %><div class="split-image"><img src="<%= side.image %>" alt="<%= side.title %>" loading="lazy" /></div><% } %>
+                    </div>
                   <% } else if (side.items && side.items.length) { %>
                     <ul class="industry-grid">
                       <% side.items.forEach(function(it){ %>

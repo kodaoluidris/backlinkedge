@@ -27,6 +27,8 @@ module.exports = {
   sections: [
     {
       type: 'features',
+      layout: 'row',
+      colorful: true,
       title: 'Why',
       titleAccent: 'Content Marketing',
       titleAfter: 'Matters',
@@ -43,6 +45,7 @@ module.exports = {
       type: 'flow',
       id: 'process',
       numbered: true,
+      colorful: true,
       alt: true,
       title: 'Our',
       titleAccent: 'Content Marketing',
@@ -58,6 +61,7 @@ module.exports = {
     },
     {
       type: 'cards',
+      colorful: true,
       title: 'Our Content Marketing Services',
       sub: 'Comprehensive content solutions to grow your brand and business.',
       items: [
@@ -92,6 +96,7 @@ module.exports = {
       right: {
         title: 'Why Choose',
         titleAccent: 'BacklinkEdge?',
+        image: '/img/why-choose-team.png',
         bullets: [
           'SEO-Focused Content That Ranks',
           'Experienced Writers & SEO Experts',
