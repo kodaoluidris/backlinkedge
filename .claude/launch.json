@@ -7,6 +7,13 @@
       "runtimeArgs": ["server.js"],
       "port": 4000,
       "autoPort": true
+    },
+    {
+      "name": "crash-frontend",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/Idriskodaolu/development/crash_reports/frontend && npm run dev"],
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }
