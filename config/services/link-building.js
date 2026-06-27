@@ -8,6 +8,7 @@ module.exports = {
   tagline: 'Earn authority links that move rankings.',
 
   // ---- Hero ----
+  eyebrow: 'Link Building',
   heading: 'Link Building Services',
   headingAccent: 'That Drive Rankings & Authority',
   subheading: 'High-Quality White-Hat Backlinks Built for Sustainable SEO Growth',
