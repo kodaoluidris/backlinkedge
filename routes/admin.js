@@ -68,6 +68,37 @@ router.get('/subscriptions', ah(async (req, res) => {
   });
 }));
 
+/* ───────────── Newsletter ───────────── */
+
+router.get('/newsletters', ah(async (req, res) => {
+  const subscribers = await dbApi.listNewsletters({ limit: 5000 });
+  res.render('admin/newsletters', {
+    active: 'newsletters',
+    adminEmail: req.session.adminEmail,
+    stripeReady: isConfigured,
+    subscribers,
+    formatDate,
+    flash: req.query.msg || null
+  });
+}));
+
+router.get('/newsletters/export', ah(async (req, res) => {
+  const rows = await dbApi.listNewsletters({ limit: 100000 });
+  const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const csv = [
+    'email,status,source,subscribed_at',
+    ...rows.map((r) => [r.email, r.status, r.source, r.created_at].map(esc).join(','))
+  ].join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="newsletter-subscribers.csv"');
+  res.send(csv);
+}));
+
+router.post('/newsletters/:id/delete', ah(async (req, res) => {
+  await dbApi.deleteNewsletter(Number(req.params.id));
+  res.redirect('/admin/newsletters?msg=deleted');
+}));
+
 /* ───────────── Blog CRUD ───────────── */
 
 // List

@@ -14,6 +14,7 @@ const webhookRouter = require('./routes/webhook');
 const checkoutRouter = require('./routes/checkout');
 const adminRouter = require('./routes/admin');
 const blogRouter = require('./routes/blog');
+const newsletterRouter = require('./routes/newsletter');
 
 // Tawk.to live chat config (optional — only injected when both IDs are set)
 const tawk = {
@@ -97,6 +98,7 @@ app.get('/services/:slug', (req, res) => {
 
 app.use('/blog', blogRouter);
 app.use('/checkout', checkoutRouter);
+app.use('/newsletter', newsletterRouter);
 app.use('/admin', adminRouter);
 
 // 404

@@ -42,10 +42,11 @@
     <div class="footer-col footer-newsletter">
       <h4>Newsletter</h4>
       <p>Get the latest SEO tips and updates straight to your inbox.</p>
-      <form class="newsletter-form" onsubmit="return false;">
-        <input type="email" placeholder="Enter your email" aria-label="Email address" required />
+      <form class="newsletter-form" id="newsletter-form" method="POST" action="/newsletter/subscribe">
+        <input type="email" name="email" placeholder="Enter your email" aria-label="Email address" required />
         <button type="submit" class="btn btn-primary btn-sm">Subscribe</button>
       </form>
+      <p class="newsletter-msg" id="newsletter-msg" role="status" aria-live="polite"></p>
     </div>
   </div>
 

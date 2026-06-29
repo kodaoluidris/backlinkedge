@@ -10,6 +10,37 @@
   });
 })();
 
+// Newsletter subscribe (AJAX with inline feedback; falls back to normal POST)
+(function () {
+  const form = document.getElementById('newsletter-form');
+  const msg = document.getElementById('newsletter-msg');
+  if (!form) return;
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = (form.email.value || '').trim();
+    const btn = form.querySelector('button');
+    if (msg) { msg.textContent = ''; msg.className = 'newsletter-msg'; }
+    if (btn) btn.disabled = true;
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'fetch' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok && d.ok, d: d }; }); })
+      .then(function (res) {
+        if (msg) {
+          msg.textContent = res.d.message || (res.ok ? 'Subscribed!' : 'Something went wrong.');
+          msg.className = 'newsletter-msg ' + (res.ok ? 'is-ok' : 'is-err');
+        }
+        if (res.ok) form.reset();
+      })
+      .catch(function () {
+        if (msg) { msg.textContent = 'Network error. Please try again.'; msg.className = 'newsletter-msg is-err'; }
+      })
+      .finally(function () { if (btn) btn.disabled = false; });
+  });
+})();
+
 // Mobile nav toggle
 (function () {
   const toggle = document.getElementById('nav-toggle');

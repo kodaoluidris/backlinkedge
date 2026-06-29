@@ -24,12 +24,34 @@ let pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   dateStrings: true,
-  charset: 'utf8mb4'
+  charset: 'utf8mb4',
+  // Keep pooled connections alive — managed hosts (freedb, etc.) drop idle ones.
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
 
-// Convenience helpers around the pool.
+// Connection-level errors that mean "the socket died" — safe to retry once,
+// because the pool will hand out a fresh connection on the next call.
+const TRANSIENT = new Set([
+  'ECONNRESET', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'EPIPE',
+  'ECONNREFUSED', 'ER_CON_COUNT_ERROR', 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'
+]);
+
+async function exec(sql, params) {
+  try {
+    return await pool.query(sql, params);
+  } catch (err) {
+    if (err && (err.fatal || TRANSIENT.has(err.code))) {
+      // Stale/dropped connection — retry once with a fresh one.
+      return await pool.query(sql, params);
+    }
+    throw err;
+  }
+}
+
+// Convenience helpers around the pool (with transient-error retry).
 async function query(sql, params = []) {
-  const [rows] = await pool.query(sql, params);
+  const [rows] = await exec(sql, params);
   return rows;
 }
 async function get(sql, params = []) {
@@ -37,7 +59,7 @@ async function get(sql, params = []) {
   return rows[0] || null;
 }
 async function run(sql, params = []) {
-  const [result] = await pool.query(sql, params);
+  const [result] = await exec(sql, params);
   return result; // { insertId, affectedRows, ... }
 }
 
@@ -106,6 +128,17 @@ async function init() {
       status              VARCHAR(40),
       created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_tx_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      email       VARCHAR(320) NOT NULL UNIQUE,
+      status      VARCHAR(20) DEFAULT 'subscribed',
+      source      VARCHAR(60) DEFAULT 'footer',
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_news_created (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -240,6 +273,32 @@ async function getAnalytics() {
   };
 }
 
+/* ───────────────────────── Newsletter ───────────────────────── */
+
+// Subscribe an email. Returns { created: true } on a new subscriber,
+// { created: false } if the email was already subscribed (idempotent).
+async function subscribeNewsletter(email, source = 'footer') {
+  const res = await run(
+    `INSERT IGNORE INTO newsletter_subscribers (email, source) VALUES (?, ?)`,
+    [email, source]
+  );
+  // INSERT IGNORE: affectedRows = 1 when a new row is inserted, 0 when the
+  // email already exists (duplicate is silently ignored — no duplicate rows).
+  return { created: res.affectedRows > 0 };
+}
+
+async function listNewsletters({ limit = 1000, offset = 0 } = {}) {
+  return query(
+    `SELECT * FROM newsletter_subscribers ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [Number(limit), Number(offset)]
+  );
+}
+
+async function deleteNewsletter(id) {
+  const res = await run('DELETE FROM newsletter_subscribers WHERE id = ?', [id]);
+  return res.affectedRows > 0;
+}
+
 /* ───────────────────────── Blogs ───────────────────────── */
 
 function slugify(title) {
@@ -339,5 +398,9 @@ module.exports = {
   deleteBlog,
   getBlogById,
   getBlogBySlug,
-  listBlogs
+  listBlogs,
+  // newsletter
+  subscribeNewsletter,
+  listNewsletters,
+  deleteNewsletter
 };
