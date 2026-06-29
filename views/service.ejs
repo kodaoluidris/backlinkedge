@@ -101,6 +101,43 @@
               <span class="viz-mini-sub">Performance Score</span>
             </div>
 
+          <% } else if (service.heroVisual === 'consulting') { %>
+            <span class="svc-hero-mark target" style="--c:<%= service.color %>"><%- include('partials/icon', { name: 'target' }) %></span>
+            <div class="viz-card viz-traffic">
+              <span class="viz-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <div class="viz-head"><span>SEO Performance Overview</span><strong class="up">▲ +152%</strong></div>
+              <svg viewBox="0 0 320 100" preserveAspectRatio="none" class="viz-chart">
+                <defs><linearGradient id="vgc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16b981" stop-opacity="0.30"/><stop offset="100%" stop-color="#16b981" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,88 C42,84 58,66 92,68 C128,70 144,46 184,46 C220,46 250,26 286,18 C302,15 312,11 320,7 L320,100 L0,100 Z" fill="url(#vgc)"/>
+                <path d="M0,88 C42,84 58,66 92,68 C128,70 144,46 184,46 C220,46 250,26 286,18 C302,15 312,11 320,7" fill="none" stroke="#16b981" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="viz-card viz-roadmap">
+              <span class="viz-health-label">SEO Strategy Roadmap</span>
+              <ul class="viz-check">
+                <li><span><%- include('partials/icon', { name: 'check' }) %></span>SEO Audit</li>
+                <li><span><%- include('partials/icon', { name: 'check' }) %></span>Content Strategy</li>
+                <li><span><%- include('partials/icon', { name: 'check' }) %></span>Keyword Targeting</li>
+                <li><span><%- include('partials/icon', { name: 'check' }) %></span>On-Page SEO</li>
+                <li><span><%- include('partials/icon', { name: 'check' }) %></span>Link Building</li>
+                <li><span><%- include('partials/icon', { name: 'check' }) %></span>Performance Tracking</li>
+              </ul>
+            </div>
+
+          <% } else if (service.heroVisual === 'ai-search') { %>
+            <div class="viz-ai">
+              <span class="viz-ai-head">AI Search Results <em>✦</em></span>
+              <div class="ai-result is-main">
+                <span class="ai-dot ok"><%- include('partials/icon', { name: 'check' }) %></span>
+                <div><strong>Your Brand</strong><small>Trusted source · Cited by AI</small></div>
+              </div>
+              <div class="ai-result"><span class="ai-dot"></span><div><strong>Brand B</strong><small>AI mentioned</small></div></div>
+              <div class="ai-result"><span class="ai-dot"></span><div><strong>Brand C</strong><small>AI mentioned</small></div></div>
+              <ul class="ai-engines">
+                <li>Google AI</li><li>ChatGPT</li><li>Gemini</li><li>Perplexity</li>
+              </ul>
+            </div>
+
           <% } else { %>
             <span class="svc-hero-mark" style="--c:<%= service.color %>"><%- include('partials/icon', { name: service.icon }) %></span>
             <div class="viz-card viz-traffic">
@@ -209,6 +246,16 @@
                         <li class="industry-tile"><span class="industry-tile-ico" style="--c:<%= service.color %>"><%- include('partials/icon', { name: it.icon || 'check' }) %></span><span><%= it.label %></span></li>
                       <% }); %>
                     </ul>
+                  <% } else if (side.testimonials && side.testimonials.length) { %>
+                    <div class="split-tms">
+                      <% side.testimonials.forEach(function(t){ %>
+                        <figure class="tm-card">
+                          <div class="rb-stars">★★★★★</div>
+                          <blockquote>“<%= t.quote %>”</blockquote>
+                          <figcaption><strong><%= t.author %></strong><span><%= t.role %></span></figcaption>
+                        </figure>
+                      <% }); %>
+                    </div>
                   <% } %>
                 </div>
               <% }); %>
@@ -218,13 +265,26 @@
         <% } else if (block.type === 'benefits') { %>
           <section class="section">
             <div class="container">
-              <div class="benefits-band">
-                <div class="benefits-head"><h2><%= block.title %></h2></div>
-                <ul class="benefits-row">
-                  <% block.items.forEach(function(it){ %>
-                    <li><span class="benefit-ico" style="--c:<%= it.color || service.color %>"><%- include('partials/icon', { name: it.icon || 'check' }) %></span><span><%= it.label %></span></li>
-                  <% }); %>
-                </ul>
+              <div class="benefits-band<%= block.testimonial ? ' with-quote' : '' %>">
+                <% if (block.title) { %><div class="benefits-head"><h2><%= block.title %></h2></div><% } %>
+                <div class="benefits-body">
+                  <ul class="benefits-row<%= block.arrows ? ' arrows' : '' %>">
+                    <% block.items.forEach(function(it){ %>
+                      <li>
+                        <span class="benefit-ico" style="--c:<%= it.color || service.color %>"><%- include('partials/icon', { name: it.icon || 'check' }) %></span>
+                        <% if (it.value) { %><strong class="benefit-val"><%= it.value %></strong><% } %>
+                        <span class="benefit-label"><%= it.label %></span>
+                      </li>
+                    <% }); %>
+                  </ul>
+                  <% if (block.testimonial) { %>
+                    <figure class="benefits-quote">
+                      <div class="rb-stars">★★★★★</div>
+                      <blockquote>“<%= block.testimonial.quote %>”</blockquote>
+                      <figcaption><strong><%= block.testimonial.author %></strong><span><%= block.testimonial.role %></span></figcaption>
+                    </figure>
+                  <% } %>
+                </div>
               </div>
             </div>
           </section>
