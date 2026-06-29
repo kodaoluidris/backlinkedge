@@ -7,6 +7,7 @@ const { isConfigured } = require('../config/stripe');
 const { upload, mediaTypeOf } = require('../middleware/upload');
 const { resolveMedia } = require('../lib/media');
 const { formatDate } = require('../lib/format');
+const mailer = require('../lib/mailer');
 
 // Wrap async route handlers so rejected promises reach Express' error handler.
 const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -78,8 +79,54 @@ router.get('/newsletters', ah(async (req, res) => {
     stripeReady: isConfigured,
     subscribers,
     formatDate,
-    flash: req.query.msg || null
+    mailerReady: mailer.isConfigured,
+    flash: req.query.msg || null,
+    sent: req.query.sent ? Number(req.query.sent) : null,
+    failed: req.query.failed ? Number(req.query.failed) : null,
+    err: req.query.err || null
   });
+}));
+
+// Send a broadcast email to selected (or all) subscribers.
+router.post('/newsletters/send', ah(async (req, res) => {
+  const subject = String(req.body.subject || '').trim();
+  const message = String(req.body.message || '').trim();
+  const scope = req.body.scope === 'all' ? 'all' : 'selected';
+
+  if (!mailer.isConfigured) {
+    return res.redirect('/admin/newsletters?err=notconfigured');
+  }
+  if (!subject || !message) {
+    return res.redirect('/admin/newsletters?err=missing');
+  }
+
+  // Resolve recipient list.
+  let recipients;
+  if (scope === 'all') {
+    recipients = (await dbApi.listNewsletters({ limit: 100000 })).map((r) => r.email);
+  } else {
+    const picked = req.body.emails;
+    recipients = Array.isArray(picked) ? picked : (picked ? [picked] : []);
+  }
+  recipients = [...new Set(recipients.filter(Boolean).map((e) => String(e).trim().toLowerCase()))];
+
+  if (!recipients.length) {
+    return res.redirect('/admin/newsletters?err=norecipients');
+  }
+
+  const html = mailer.textToHtml(message);
+  let sent = 0, failed = 0;
+  // Send individually so each recipient gets a personal copy (no leaked addresses).
+  for (const to of recipients) {
+    try {
+      await mailer.sendMail({ to, subject, html, text: message });
+      sent += 1;
+    } catch (e) {
+      failed += 1;
+      console.error(`Newsletter send to ${to} failed:`, e && e.message ? e.message : e);
+    }
+  }
+  res.redirect(`/admin/newsletters?sent=${sent}&failed=${failed}`);
 }));
 
 router.get('/newsletters/export', ah(async (req, res) => {

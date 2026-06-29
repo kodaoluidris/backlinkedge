@@ -11,7 +11,7 @@
     <main class="admin-main">
       <header class="admin-topbar">
         <div>
-          <h1>Newsletter Subscribers</h1>
+          <h1>Newsletter</h1>
           <p><%= subscribers.length %> subscriber<%= subscribers.length === 1 ? '' : 's' %> collected.</p>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
@@ -20,11 +20,54 @@
         </div>
       </header>
 
-      <% if (flash === 'deleted') { %>
-        <div class="alert alert-warn">Subscriber removed.</div>
+      <!-- Result / status banners -->
+      <% if (sent !== null) { %>
+        <div class="alert <%= failed ? 'alert-warn' : '' %>" style="<%= failed ? '' : 'background:rgba(0,194,168,.12);border:1px solid rgba(0,194,168,.35);color:#44e3a8;' %>">
+          ✔ Sent to <strong><%= sent %></strong> subscriber<%= sent === 1 ? '' : 's' %><% if (failed) { %> · <strong><%= failed %></strong> failed (check server logs)<% } %>.
+        </div>
+      <% } %>
+      <% if (flash === 'deleted') { %><div class="alert alert-warn">Subscriber removed.</div><% } %>
+      <% if (err === 'notconfigured') { %><div class="alert alert-error">Email is not configured. Add your SMTP settings to <code>.env</code> first.</div><% } %>
+      <% if (err === 'missing') { %><div class="alert alert-error">Please enter both a subject and a message.</div><% } %>
+      <% if (err === 'norecipients') { %><div class="alert alert-error">No recipients selected. Tick some subscribers or use “Send to all”.</div><% } %>
+
+      <% if (!mailerReady) { %>
+        <div class="alert alert-warn">
+          <strong>Email sending is not configured yet.</strong> Add <code>SMTP_HOST</code>, <code>SMTP_USER</code>,
+          <code>SMTP_PASS</code> and <code>MAIL_FROM</code> to your <code>.env</code> file, then restart the server.
+          You can still collect and export subscribers below.
+        </div>
       <% } %>
 
+      <!-- Compose panel -->
       <section class="panel">
+        <div class="panel-head"><h2>Compose Email</h2></div>
+        <form method="POST" action="/admin/newsletters/send" id="sendForm" class="compose-form">
+          <label class="form-field">
+            <span>Subject <em>*</em></span>
+            <input type="text" name="subject" placeholder="e.g. 5 SEO tips to rank higher this month" required <%= mailerReady ? '' : 'disabled' %> />
+          </label>
+          <label class="form-field">
+            <span>Message <em>*</em> <small>(plain text — line breaks become paragraphs)</small></span>
+            <textarea name="message" rows="8" placeholder="Write your newsletter here…" required <%= mailerReady ? '' : 'disabled' %>></textarea>
+          </label>
+          <div class="compose-actions">
+            <button type="submit" name="scope" value="selected" class="btn btn-primary" id="send-selected" <%= mailerReady ? '' : 'disabled' %>>
+              Send to Selected (<span id="sel-count">0</span>)
+            </button>
+            <button type="submit" name="scope" value="all" class="btn btn-outline" id="send-all" <%= mailerReady ? '' : 'disabled' %>>
+              Send to All (<%= subscribers.length %>)
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Subscribers -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Subscribers</h2>
+          <% if (subscribers.length) { %><span class="link" id="toggle-all-link">Select all</span><% } %>
+        </div>
         <% if (!subscribers.length) { %>
           <p class="empty">No subscribers yet. When visitors sign up via the footer newsletter form, they’ll appear here.</p>
         <% } else { %>
@@ -32,7 +75,7 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th style="width:42px;"><input type="checkbox" id="check-all" aria-label="Select all" /></th>
                   <th>Email</th>
                   <th>Source</th>
                   <th>Status</th>
@@ -41,9 +84,9 @@
                 </tr>
               </thead>
               <tbody>
-                <% subscribers.forEach(function (s, i) { %>
+                <% subscribers.forEach(function (s) { %>
                   <tr>
-                    <td class="muted"><%= i + 1 %></td>
+                    <td><input type="checkbox" class="news-check" name="emails" value="<%= s.email %>" form="sendForm" /></td>
                     <td><strong><%= s.email %></strong></td>
                     <td class="muted"><%= s.source || 'footer' %></td>
                     <td><span class="status status-active"><%= s.status || 'subscribed' %></span></td>
@@ -64,15 +107,49 @@
   </div>
 
   <script>
-    const input = document.getElementById('news-search');
-    if (input) {
-      input.addEventListener('input', function () {
+    (function () {
+      const checks = Array.from(document.querySelectorAll('.news-check'));
+      const all = document.getElementById('check-all');
+      const toggleLink = document.getElementById('toggle-all-link');
+      const counter = document.getElementById('sel-count');
+      const search = document.getElementById('news-search');
+      const sendSelected = document.getElementById('send-selected');
+      const sendAll = document.getElementById('send-all');
+
+      function selected() { return checks.filter(function (c) { return c.checked; }); }
+      function refresh() {
+        const n = selected().length;
+        if (counter) counter.textContent = n;
+        if (all) all.checked = n > 0 && n === checks.length;
+      }
+      checks.forEach(function (c) { c.addEventListener('change', refresh); });
+      if (all) all.addEventListener('change', function () { checks.forEach(function (c) { c.checked = all.checked; }); refresh(); });
+      if (toggleLink) toggleLink.addEventListener('click', function () {
+        const target = selected().length !== checks.length;
+        checks.forEach(function (c) { c.checked = target; });
+        if (all) all.checked = target;
+        refresh();
+      });
+
+      // Require a subject + message + at least one selection before sending to selected.
+      if (sendSelected) sendSelected.addEventListener('click', function (e) {
+        if (selected().length === 0) { e.preventDefault(); alert('Select at least one subscriber, or use “Send to all”.'); return; }
+        if (!confirm('Send this email to ' + selected().length + ' selected subscriber(s)?')) e.preventDefault();
+      });
+      if (sendAll) sendAll.addEventListener('click', function (e) {
+        if (!confirm('Send this email to ALL ' + checks.length + ' subscriber(s)?')) e.preventDefault();
+      });
+
+      // Search filter
+      if (search) search.addEventListener('input', function () {
         const q = this.value.toLowerCase();
         document.querySelectorAll('.data-table tbody tr').forEach(function (row) {
           row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
         });
       });
-    }
+
+      refresh();
+    })();
   </script>
 </body>
 </html>
